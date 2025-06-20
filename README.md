@@ -6,13 +6,13 @@ A Restful API for managing books and borrow records in a library system. Built w
 
 ## Features
 
-- Create, read, update, delete books with schema validation.
-- Borrow books with qantity and due date tracking.
-- Get summury of borrowed books using MongoDB aggregation pipeline.
-- Filter books by genre, sort and limit etc.
-- Mongoose schema validation and error handling.
-- Uses Mongoose middlware and static/instance methods.
-- Consistent error for unknown routes.
+- **Book Management:** Create, read, update, delete books with schema validation.
+- **Borrowing System:** Borrow books with qantity and due date tracking.
+- **Aggregation:** Get summury of borrowed books using MongoDB aggregation pipeline.
+- **Filtering & Sorting:** Filter books by genre, sort and limit etc.
+- **Validation** Mongoose schema validation and error handling.
+- **Middlware** Uses Mongoose middlware and static/instance methods.
+- **Universal 404 Handler:** Consistent error for unknown routes.
 
 ---
 
@@ -44,7 +44,7 @@ npm install
 - Create a `.env` file in the root directory and add:
 
 ```
-<!-- set your mongodb connection string here -->
+// set your mongodb connection string here
 DATABASE_URL=mongodb://localhost:29047/lmapi
 PORT=5000
 ```
