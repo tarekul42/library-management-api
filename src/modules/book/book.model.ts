@@ -28,6 +28,26 @@ const bookSchema = new Schema<IBook>(
   }
 );
 
+// pre-save hook to update the 'available' field field based on 'copies' data
+bookSchema.pre("save", function (next) {
+  if (this.copies === 0) {
+    this.available = false;
+  } else {
+    this.available = true;
+  }
+  next();
+});
+
+// Add this pre-findOneAndUpdate hook
+bookSchema.pre("findOneAndUpdate", function (next) {
+  const update = this.getUpdate() as any;
+  if (update && update.copies !== undefined) {
+    update.available = update.copies === 0 ? false : true;
+    this.setUpdate(update);
+  }
+  next();
+});
+
 const Book = model<IBook>("Book", bookSchema);
 
 export default Book;
