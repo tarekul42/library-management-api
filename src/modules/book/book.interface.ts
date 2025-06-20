@@ -9,3 +9,10 @@ export interface IBook {
   copies: number;
   available: boolean;
 }
+
+export interface GetBookQuery{
+    filter?: string;
+    sortBy?: string;
+    sort?: "asc" | "desc";
+    limit?: string;
+}
