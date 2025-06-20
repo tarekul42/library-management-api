@@ -77,8 +77,31 @@ const getBookById = async (req: Request, res: Response) => {
   }
 };
 
+const updateBook = async (req: Request, res: Response) => {
+  try {
+    const bookId = req.params.bookId;
+    const updatedBody = req.body;
+    const data = await Book.findByIdAndUpdate(bookId, updatedBody, {
+      new: true
+    });
+
+    res.status(200).json({
+      success: true,
+      message: "Book updated successfully",
+      data,
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: "Validation failed",
+      error,
+    });
+  }
+};
+
 export const bookController = {
   createBook,
   getBooks,
   getBookById,
+  updateBook,
 };
