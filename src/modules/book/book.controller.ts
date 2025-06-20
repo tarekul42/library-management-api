@@ -58,7 +58,27 @@ const getBooks = async (req: Request, res: Response) => {
   }
 };
 
+const getBookById = async (req: Request, res: Response) => {
+  try {
+    const bookId = req.params.bookId;
+    const data = await Book.findById(bookId);
+
+    res.status(200).json({
+      success: true,
+      message: "Book retrieved successfully",
+      data,
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: "Validation failed",
+      error,
+    });
+  }
+};
+
 export const bookController = {
   createBook,
   getBooks,
+  getBookById,
 };
