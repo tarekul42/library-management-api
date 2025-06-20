@@ -58,10 +58,19 @@ const getBooks = async (req: Request, res: Response) => {
   }
 };
 
-const getBookById = async (req: Request, res: Response) => {
+const getBookById = async (req: Request, res: Response): Promise<void> => {
   try {
     const bookId = req.params.bookId;
     const data = await Book.findById(bookId);
+
+    if (!data) {
+       res.status(404).json({
+        success: false,
+        message: "Book not found",
+        data: null,
+      });
+      return;
+    }
 
     res.status(200).json({
       success: true,
@@ -102,14 +111,14 @@ const updateBook = async (req: Request, res: Response) => {
 
 const deleteBookById = async (req: Request, res: Response) => {
   try {
-    const bookId = req.params.id;
+    const bookId = req.params.bookId;
 
     const data = await Book.findByIdAndDelete(bookId);
 
-    res.status(204).json({
+    res.status(200).json({
       success: true,
       message: "Book deleted successfully",
-      data,
+      data: null,
     });
   } catch (error) {
     res.status(500).json({

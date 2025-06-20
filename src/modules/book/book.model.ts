@@ -38,7 +38,7 @@ bookSchema.pre("save", function (next) {
   next();
 });
 
-// Add this pre-findOneAndUpdate hook
+// Add this pre-findOneAndUpdate hook to update the value of field "available"
 bookSchema.pre("findOneAndUpdate", function (next) {
   const update = this.getUpdate() as any;
   if (update && update.copies !== undefined) {

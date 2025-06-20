@@ -1,4 +1,4 @@
-import { NextFunction, Request, Response } from "express";
+import { Request, Response } from "express";
 import Borrow from "./borrow.model";
 import Book from "../book/book.model";
 

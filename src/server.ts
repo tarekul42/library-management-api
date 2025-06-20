@@ -1,4 +1,4 @@
-import express, { Application, Request, Response } from "express";
+import express, { Application, NextFunction, Request, Response } from "express";
 import cors from "cors";
 import config from "./config";
 import mongoose from "mongoose";
@@ -16,6 +16,30 @@ app.get("/api", (req: Request, res: Response) => {
     success: true,
     message: "Welcome to Library Management Server!",
   });
+});
+
+// universal 404 handler
+app.use((req: Request, res: Response, next: NextFunction) => {
+  res.status(404).json({
+    success: false,
+    message: "Route not found",
+    error: {
+      code: 404,
+      description: "The requested endpoint does not exist.",
+    },
+  });
+  next();
+});
+
+// global error handler
+app.use((error: any, req: Request, res: Response, next: NextFunction) => {
+  if (error) {
+    console.log("Error", error);
+    res
+      .status(400)
+      .json({ message: "Something went wrong from global error", error });
+  }
+  next();
 });
 
 async function server() {
