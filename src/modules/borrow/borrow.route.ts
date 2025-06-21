@@ -7,3 +7,5 @@ borrowRoute.post("/", borrowController.createBorrow);
 borrowRoute.get("/", borrowController.getBorrow);
 
 export default borrowRoute;
+
+

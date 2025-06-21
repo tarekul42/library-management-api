@@ -16,3 +16,4 @@ export interface GetBookQuery{
     sort?: "asc" | "desc";
     limit?: string;
 }
+
