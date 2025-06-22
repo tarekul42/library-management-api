@@ -57,9 +57,9 @@ const createBorrow = async (req: Request, res: Response): Promise<void> => {
       return;
     }
 
-    // deduct copies and save(pre-save hook updates 'available' field)
+
     book.copies -= quantity;
-    await book.save();
+    await book.updateAvailability();
 
     // create a borrow record
     const data = await Borrow.create({

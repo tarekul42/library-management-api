@@ -1,4 +1,10 @@
-type Genre = "FICTION" | "NON_FICTION" | "SCIENCE" | "HISTORY" | "BIOGRAPHY" | "FANTASY";
+type Genre =
+  | "FICTION"
+  | "NON_FICTION"
+  | "SCIENCE"
+  | "HISTORY"
+  | "BIOGRAPHY"
+  | "FANTASY";
 
 export interface IBook {
   title: string;
@@ -10,10 +16,15 @@ export interface IBook {
   available: boolean;
 }
 
-export interface GetBookQuery{
-    filter?: string;
-    sortBy?: string;
-    sort?: "asc" | "desc";
-    limit?: string;
+export interface GetBookQuery {
+  filter?: string;
+  sortBy?: string;
+  sort?: "asc" | "desc";
+  limit?: string;
 }
 
+export interface IAvailability {
+  copies: number;
+  available: boolean;
+  updateAvailability: () => Promise<IAvailability>;
+}

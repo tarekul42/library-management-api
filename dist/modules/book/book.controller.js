@@ -17,6 +17,7 @@ const book_model_1 = __importDefault(require("./book.model"));
 const createBook = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const data = yield book_model_1.default.create(req.body);
+        yield data.updateAvailability();
         res.status(201).json({
             success: true,
             message: "Book created successfully",
@@ -97,6 +98,10 @@ const updateBook = (req, res) => __awaiter(void 0, void 0, void 0, function* () 
             new: true,
             runValidators: true,
         });
+        if (data) {
+            Object.assign(data, updatedBody);
+            yield data.updateAvailability();
+        }
         res.status(200).json({
             success: true,
             message: "Book updated successfully",

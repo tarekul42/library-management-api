@@ -62,9 +62,8 @@ const createBorrow = (req, res) => __awaiter(void 0, void 0, void 0, function* (
             });
             return;
         }
-        // deduct copies and save(pre-save hook updates 'available' field)
         book.copies -= quantity;
-        yield book.save();
+        yield book.updateAvailability();
         // create a borrow record
         const data = yield borrow_model_1.default.create({
             book: book._id,

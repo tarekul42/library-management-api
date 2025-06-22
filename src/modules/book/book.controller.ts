@@ -5,6 +5,7 @@ import { GetBookQuery } from "./book.interface";
 const createBook = async (req: Request, res: Response) => {
   try {
     const data = await Book.create(req.body);
+    await data.updateAvailability();
 
     res.status(201).json({
       success: true,
@@ -64,7 +65,7 @@ const getBookById = async (req: Request, res: Response): Promise<void> => {
     const data = await Book.findById(bookId);
 
     if (!data) {
-       res.status(404).json({
+      res.status(404).json({
         success: false,
         message: "Book not found",
         data: null,
@@ -86,7 +87,7 @@ const getBookById = async (req: Request, res: Response): Promise<void> => {
   }
 };
 
-const updateBook = async (req: Request, res: Response) => {
+const updateBook = async (req: Request, res: Response): Promise<void> => {
   try {
     const bookId = req.params.bookId;
     const updatedBody = req.body;
@@ -94,6 +95,11 @@ const updateBook = async (req: Request, res: Response) => {
       new: true,
       runValidators: true,
     });
+
+    if (data) {
+      Object.assign(data, updatedBody);
+      await data.updateAvailability();
+    }
 
     res.status(200).json({
       success: true,
@@ -136,5 +142,3 @@ export const bookController = {
   updateBook,
   deleteBookById,
 };
-
-

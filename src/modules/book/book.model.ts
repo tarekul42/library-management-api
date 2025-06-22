@@ -1,7 +1,7 @@
-import { model, Schema } from "mongoose";
-import { IBook } from "./book.interface";
+import { model, Schema, Model } from "mongoose";
+import { IAvailability, IBook } from "./book.interface";
 
-const bookSchema = new Schema<IBook>(
+const bookSchema = new Schema<IBook, Model<IBook>, IAvailability>(
   {
     title: { type: String, trim: true, required: true },
     author: { type: String, trim: true, required: true },
@@ -28,26 +28,11 @@ const bookSchema = new Schema<IBook>(
   }
 );
 
-// pre-save hook to update the 'available' field field based on 'copies' data
-bookSchema.pre("save", function (next) {
-  if (this.copies === 0) {
-    this.available = false;
-  } else {
-    this.available = true;
-  }
-  next();
-});
+bookSchema.methods.updateAvailability = async function () {
+  this.available = this.copies === 0 ? false : true;
+  return this.save();
+};
 
-// Add this pre-findOneAndUpdate hook to update the value of field "available"
-bookSchema.pre("findOneAndUpdate", function (next) {
-  const update = this.getUpdate() as any;
-  if (update && update.copies !== undefined) {
-    update.available = update.copies === 0 ? false : true;
-    this.setUpdate(update);
-  }
-  next();
-});
-
-const Book = model<IBook>("Book", bookSchema);
+const Book = model<IBook, Model<IAvailability>>("Book", bookSchema);
 
 export default Book;

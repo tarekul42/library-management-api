@@ -1,4 +1,13 @@
 "use strict";
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 const mongoose_1 = require("mongoose");
 const bookSchema = new mongoose_1.Schema({
@@ -24,24 +33,11 @@ const bookSchema = new mongoose_1.Schema({
     versionKey: false,
     timestamps: true,
 });
-// pre-save hook to update the 'available' field field based on 'copies' data
-bookSchema.pre("save", function (next) {
-    if (this.copies === 0) {
-        this.available = false;
-    }
-    else {
-        this.available = true;
-    }
-    next();
-});
-// Add this pre-findOneAndUpdate hook to update the value of field "available"
-bookSchema.pre("findOneAndUpdate", function (next) {
-    const update = this.getUpdate();
-    if (update && update.copies !== undefined) {
-        update.available = update.copies === 0 ? false : true;
-        this.setUpdate(update);
-    }
-    next();
-});
+bookSchema.methods.updateAvailability = function () {
+    return __awaiter(this, void 0, void 0, function* () {
+        this.available = this.copies === 0 ? false : true;
+        return this.save();
+    });
+};
 const Book = (0, mongoose_1.model)("Book", bookSchema);
 exports.default = Book;

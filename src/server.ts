@@ -50,6 +50,7 @@ async function server() {
     app.listen(config.port, () => {
       console.log(`Library management API is running on port: ${config.port}`);
     });
+    
   } catch (error) {
     console.error(`Library management API got error: ${error}`);
   }
