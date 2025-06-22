@@ -9,5 +9,14 @@ const borrowSchema = new mongoose_1.Schema({
     versionKey: false,
     timestamps: true,
 });
+// pre-save middlwware: runs before saving a borrow record
+borrowSchema.pre("save", function (next) {
+    console.log(`About to save borrow record for book ID: ${this.book}`);
+    next();
+});
+// post-save middleware: runs after saving a borrow record
+borrowSchema.post("save", function (doc) {
+    console.log(`Borrow record saved successfully for book ID: ${doc._id}`);
+});
 const Borrow = (0, mongoose_1.model)("Borrow", borrowSchema);
 exports.default = Borrow;
