@@ -1,5 +1,5 @@
 import type { Context } from "hono";
-import { registerSchema, loginSchema } from "../../schemas/auth.schema";
+import { registerSchema, loginSchema, forgotPasswordSchema, resetPasswordSchema } from "../../schemas/auth.schema";
 import * as authService from "./auth.service";
 
 export async function register(c: Context) {
@@ -24,4 +24,18 @@ export async function refresh(c: Context) {
 
 export async function logout(c: Context) {
   return c.json({ success: true, message: "Logged out successfully" });
+}
+
+export async function forgotPassword(c: Context) {
+  const body = await c.req.json();
+  const input = forgotPasswordSchema.parse(body);
+  const result = await authService.forgotPassword(input.email);
+  return c.json({ success: true, message: "Password reset email sent", data: result });
+}
+
+export async function resetPassword(c: Context) {
+  const body = await c.req.json();
+  const input = resetPasswordSchema.parse(body);
+  await authService.resetPassword(input.token, input.password);
+  return c.json({ success: true, message: "Password reset successful" });
 }

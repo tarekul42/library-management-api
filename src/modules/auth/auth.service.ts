@@ -1,5 +1,6 @@
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
+import crypto from "node:crypto";
 import { User, type IUserDocument } from "../../models/user.model";
 import { getEnv, type Env } from "../../config";
 import { AppError } from "../../shared/errors";
@@ -100,4 +101,47 @@ export async function refreshToken(token: string) {
   } catch {
     throw new AppError("Invalid or expired refresh token", 401);
   }
+}
+
+export async function forgotPassword(email: string) {
+  const user = await User.findOne({ email });
+  if (!user) {
+    // Don't reveal whether the email exists
+    return { resetToken: null };
+  }
+
+  const resetToken = crypto.randomBytes(32).toString("hex");
+  const resetTokenHash = await bcrypt.hash(resetToken, 10);
+
+  user.resetPasswordToken = resetTokenHash;
+  user.resetPasswordExpires = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
+  await user.save();
+
+  // In production, send email with resetToken. For now, return it in response.
+  return { resetToken };
+}
+
+export async function resetPassword(token: string, password: string) {
+  const env = getEnv();
+  const users = await User.find({
+    resetPasswordExpires: { $gt: new Date() },
+  });
+
+  let matchedUser: IUserDocument | null = null;
+  for (const u of users) {
+    if (u.resetPasswordToken && (await bcrypt.compare(token, u.resetPasswordToken))) {
+      matchedUser = u;
+      break;
+    }
+  }
+
+  if (!matchedUser) {
+    throw new AppError("Invalid or expired reset token", 400);
+  }
+
+  const hashedPassword = await bcrypt.hash(password, 12);
+  matchedUser.password = hashedPassword;
+  matchedUser.resetPasswordToken = undefined;
+  matchedUser.resetPasswordExpires = undefined;
+  await matchedUser.save();
 }

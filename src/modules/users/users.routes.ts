@@ -2,6 +2,7 @@ import { Hono } from "hono";
 import type { Context } from "hono";
 import { authenticate, authorize } from "../../middleware";
 import { User } from "../../models/user.model";
+import { Borrow } from "../../models/borrow.model";
 
 const userRoutes = new Hono();
 
@@ -16,6 +17,14 @@ userRoutes.put("/me", authenticate, async (c: Context) => {
   const body = await c.req.json();
   const user = await User.findByIdAndUpdate(userId, body, { new: true });
   return c.json({ success: true, message: "Profile updated", data: user });
+});
+
+userRoutes.get("/me/history", authenticate, async (c: Context) => {
+  const userId = c.get("userId");
+  const borrows = await Borrow.find({ user: userId })
+    .populate("book", "title isbn coverImage")
+    .sort({ borrowedAt: -1 });
+  return c.json({ success: true, message: "Borrow history retrieved", data: borrows });
 });
 
 userRoutes.get("/", authenticate, authorize("admin"), async (c: Context) => {

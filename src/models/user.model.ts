@@ -12,6 +12,8 @@ export interface IUserDocument extends Document {
   lastLoginAt?: Date;
   fineBalance: number;
   borrowedCount: number;
+  resetPasswordToken?: string;
+  resetPasswordExpires?: Date;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -33,6 +35,8 @@ const userSchema = new Schema<IUserDocument>(
     lastLoginAt: { type: Date },
     fineBalance: { type: Number, default: 0, min: 0 },
     borrowedCount: { type: Number, default: 0, min: 0 },
+    resetPasswordToken: { type: String, select: false },
+    resetPasswordExpires: { type: Date },
   },
   { timestamps: true, versionKey: false },
 );
