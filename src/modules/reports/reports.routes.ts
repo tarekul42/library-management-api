@@ -35,8 +35,32 @@ function parseDateParam(value: string | undefined, label: string): Date | undefi
   return date;
 }
 
-reportRoutes.get("/borrows", authenticate, authorize("admin"), async (c: Context) => {
+async function respondReport(
+  c: Context,
+  title: string,
+  headers: string[],
+  rows: Record<string, unknown>[],
+  colWidths: number[],
+  filename: string,
+  pdfOptions?: { layout?: "portrait" | "landscape"; fontSize?: number },
+) {
   const format = c.req.query("format") || "csv";
+
+  if (format === "pdf") {
+    const pdf = await generatePDF(title, headers, rows, colWidths, filename, pdfOptions);
+    return respondWithPDF(c, pdf, filename);
+  }
+
+  setCSVHeaders(c, filename);
+  return c.newResponse(csvSerialize(rows));
+}
+
+function populated<T>(doc: unknown): T | null {
+  if (!doc || typeof doc !== "object") return null;
+  return doc as T;
+}
+
+reportRoutes.get("/borrows", authenticate, authorize("admin"), async (c: Context) => {
   const from = parseDateParam(c.req.query("from"), "from");
   const to = parseDateParam(c.req.query("to"), "to");
   const status = c.req.query("status");
@@ -58,10 +82,10 @@ reportRoutes.get("/borrows", authenticate, authorize("admin"), async (c: Context
 
   const rows = borrows.map((b) => ({
     ID: b._id.toString(),
-    User: (b.user as unknown as Record<string, string>)?.name ?? "",
-    Email: (b.user as unknown as Record<string, string>)?.email ?? "",
-    Book: (b.book as unknown as Record<string, string>)?.title ?? "",
-    ISBN: (b.book as unknown as Record<string, string>)?.isbn ?? "",
+    User: populated<{ name: string }>(b.user)?.name ?? "",
+    Email: populated<{ email: string }>(b.user)?.email ?? "",
+    Book: populated<{ title: string }>(b.book)?.title ?? "",
+    ISBN: populated<{ isbn: string }>(b.book)?.isbn ?? "",
     Quantity: b.quantity,
     Status: b.status,
     Borrowed: b.borrowedAt?.toISOString() ?? "",
@@ -69,23 +93,15 @@ reportRoutes.get("/borrows", authenticate, authorize("admin"), async (c: Context
     Returned: b.returnedAt?.toISOString() ?? "",
   }));
 
-  if (format === "pdf") {
-    const pdf = await generatePDF(
-      "Borrow Report",
-      ["ID", "User", "Email", "Book", "ISBN", "Quantity", "Status", "Borrowed", "Due", "Returned"],
-      rows,
-      [60, 70, 90, 100, 70, 25, 50, 80, 80, 80],
-      "borrows-report",
-    );
-    return respondWithPDF(c, pdf, "borrows-report");
-  }
-
-  setCSVHeaders(c, "borrows-report");
-  return c.newResponse(csvSerialize(rows));
+  return respondReport(c, "Borrow Report",
+    ["ID", "User", "Email", "Book", "ISBN", "Quantity", "Status", "Borrowed", "Due", "Returned"],
+    rows,
+    [60, 70, 90, 100, 70, 25, 50, 80, 80, 80],
+    "borrows-report",
+  );
 });
 
 reportRoutes.get("/fines", authenticate, authorize("admin"), async (c: Context) => {
-  const format = c.req.query("format") || "csv";
   const from = parseDateParam(c.req.query("from"), "from");
   const to = parseDateParam(c.req.query("to"), "to");
 
@@ -103,10 +119,10 @@ reportRoutes.get("/fines", authenticate, authorize("admin"), async (c: Context) 
     .sort({ createdAt: -1 })
     .lean();
 
-  const rows = fines.map((f) => ({
+  const rows = fines.map((f) => ({ 
     ID: f._id.toString(),
-    User: (f.user as unknown as Record<string, string>)?.name ?? "",
-    Email: (f.user as unknown as Record<string, string>)?.email ?? "",
+    User: populated<{ name: string }>(f.user)?.name ?? "",
+    Email: populated<{ email: string }>(f.user)?.email ?? "",
     Amount: f.amount,
     Reason: f.reason,
     Paid: f.paid ? "Yes" : "No",
@@ -114,24 +130,15 @@ reportRoutes.get("/fines", authenticate, authorize("admin"), async (c: Context) 
     Created: f.createdAt?.toISOString() ?? "",
   }));
 
-  if (format === "pdf") {
-    const pdf = await generatePDF(
-      "Fines Report",
-      ["ID", "User", "Email", "Amount", "Reason", "Paid", "PaidAt", "Created"],
-      rows,
-      [60, 70, 90, 50, 150, 40, 80, 80],
-      "fines-report",
-    );
-    return respondWithPDF(c, pdf, "fines-report");
-  }
-
-  setCSVHeaders(c, "fines-report");
-  return c.newResponse(csvSerialize(rows));
+  return respondReport(c, "Fines Report",
+    ["ID", "User", "Email", "Amount", "Reason", "Paid", "PaidAt", "Created"],
+    rows,
+    [60, 70, 90, 50, 150, 40, 80, 80],
+    "fines-report",
+  );
 });
 
 reportRoutes.get("/books", authenticate, authorize("admin"), async (c: Context) => {
-  const format = c.req.query("format") || "csv";
-
   const books = await Book.find()
     .populate("author", "name")
     .sort({ createdAt: -1 })
@@ -140,7 +147,7 @@ reportRoutes.get("/books", authenticate, authorize("admin"), async (c: Context) 
   const rows = books.map((b) => ({
     ID: b._id.toString(),
     Title: b.title,
-    Author: (b.author as unknown as Record<string, string>)?.name ?? "",
+    Author: populated<{ name: string }>(b.author)?.name ?? "",
     ISBN: b.isbn,
     Genre: b.genre,
     Copies: b.copies,
@@ -149,24 +156,15 @@ reportRoutes.get("/books", authenticate, authorize("admin"), async (c: Context) 
     ReviewCount: b.reviewCount ?? 0,
   }));
 
-  if (format === "pdf") {
-    const pdf = await generatePDF(
-      "Books Report",
-      ["ID", "Title", "Author", "ISBN", "Genre", "Copies", "Available", "AvgRating", "ReviewCount"],
-      rows,
-      [60, 120, 80, 70, 60, 40, 40, 40, 45],
-      "books-report",
-    );
-    return respondWithPDF(c, pdf, "books-report");
-  }
-
-  setCSVHeaders(c, "books-report");
-  return c.newResponse(csvSerialize(rows));
+  return respondReport(c, "Books Report",
+    ["ID", "Title", "Author", "ISBN", "Genre", "Copies", "Available", "AvgRating", "ReviewCount"],
+    rows,
+    [60, 120, 80, 70, 60, 40, 40, 40, 45],
+    "books-report",
+  );
 });
 
 reportRoutes.get("/popular", authenticate, authorize("admin"), async (c: Context) => {
-  const format = c.req.query("format") || "csv";
-
   const popular = await Borrow.aggregate([
     { $group: { _id: "$book", borrowCount: { $sum: 1 } } },
     { $sort: { borrowCount: -1 } },
@@ -183,20 +181,13 @@ reportRoutes.get("/popular", authenticate, authorize("admin"), async (c: Context
     BorrowCount: b.borrowCount,
   }));
 
-  if (format === "pdf") {
-    const pdf = await generatePDF(
-      "Popular Books Report",
-      ["#", "Title", "ISBN", "Genre", "Borrow Count"],
-      rows.map((r, i) => ({ "#": i + 1, ...r })),
-      [20, 120, 70, 60, 50],
-      "popular-books-report",
-      { layout: "portrait", fontSize: 10 },
-    );
-    return respondWithPDF(c, pdf, "popular-books-report");
-  }
-
-  setCSVHeaders(c, "popular-books-report");
-  return c.newResponse(csvSerialize(rows));
+  return respondReport(c, "Popular Books Report",
+    ["#", "Title", "ISBN", "Genre", "Borrow Count"],
+    rows.map((r, i) => ({ "#": i + 1, ...r })),
+    [20, 120, 70, 60, 50],
+    "popular-books-report",
+    { layout: "portrait", fontSize: 10 },
+  );
 });
 
 export default reportRoutes;

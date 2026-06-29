@@ -7,6 +7,10 @@ export const GENRES = [
   "FANTASY",
 ] as const;
 
+export type Genre = typeof GENRES[number];
+
+export const MAX_PUBLISHED_YEAR = new Date().getFullYear() + 5;
+
 export const PAGINATION = {
   DEFAULT_PAGE: 1,
   DEFAULT_LIMIT: 10,

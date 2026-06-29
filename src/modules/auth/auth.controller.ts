@@ -24,9 +24,14 @@ export async function refresh(c: Context) {
 }
 
 export async function logout(c: Context) {
-  const body = await c.req.json().catch(() => ({}));
+  let body: Record<string, unknown> = {};
+  try {
+    body = await c.req.json();
+  } catch {
+    body = {};
+  }
   if (body.refreshToken) {
-    await authService.logout(body.refreshToken);
+    await authService.logout(body.refreshToken as string);
   }
   return c.json({ success: true, message: "Logged out successfully" });
 }

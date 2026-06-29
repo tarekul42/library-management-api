@@ -1,5 +1,11 @@
-import type { Model, Document } from "mongoose";
-import { NotFoundError } from "./errors";
+import mongoose, { type Model, type Document } from "mongoose";
+import { AppError, NotFoundError } from "./errors";
+
+export function validateObjectId(id: string, label: string = "ID"): void {
+  if (!mongoose.Types.ObjectId.isValid(id)) {
+    throw new AppError(`Invalid ${label}: "${id}"`, 400);
+  }
+}
 
 export async function findByIdOrThrow<T extends Document>(
   model: Model<T>,

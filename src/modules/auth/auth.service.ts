@@ -5,16 +5,29 @@ import { User, type IUserDocument } from "../../models/user.model";
 import { getEnv, type Env } from "../../config";
 import { AppError } from "../../shared/errors";
 import type { RegisterInput, LoginInput } from "../../schemas/auth.schema";
+import { getRedis } from "../../utils/redis";
 
-const tokenBlacklist = new Set<string>();
-
-function isTokenBlacklisted(token: string): boolean {
-  return tokenBlacklist.has(token);
+function blacklistKey(token: string): string {
+  return `token_blacklist:${token}`;
 }
 
-function addToBlacklist(token: string): void {
-  tokenBlacklist.add(token);
-  setTimeout(() => tokenBlacklist.delete(token), 7 * 24 * 60 * 60 * 1000);
+async function isTokenBlacklisted(token: string): Promise<boolean> {
+  try {
+    const redis = getRedis();
+    const exists = await redis.exists(blacklistKey(token));
+    return exists === 1;
+  } catch {
+    return false;
+  }
+}
+
+async function addToBlacklist(token: string): Promise<void> {
+  try {
+    const redis = getRedis();
+    await redis.set(blacklistKey(token), "1", "EX", 7 * 24 * 60 * 60);
+  } catch {
+    // Redis unavailable; token will remain valid until expiry
+  }
 }
 
 function generateTokens(user: IUserDocument, env: Env) {
@@ -97,7 +110,7 @@ export async function login(input: LoginInput) {
 export async function refreshToken(token: string) {
   const env = getEnv();
 
-  if (isTokenBlacklisted(token)) {
+  if (await isTokenBlacklisted(token)) {
     throw new AppError("Refresh token has been revoked", 401);
   }
 
@@ -111,7 +124,7 @@ export async function refreshToken(token: string) {
       throw new AppError("Invalid refresh token", 401);
     }
 
-    addToBlacklist(token);
+    await addToBlacklist(token);
     const tokens = generateTokens(user, env);
     return tokens;
   } catch {
@@ -120,7 +133,7 @@ export async function refreshToken(token: string) {
 }
 
 export async function logout(token: string) {
-  addToBlacklist(token);
+  await addToBlacklist(token);
 }
 
 export async function forgotPassword(email: string) {

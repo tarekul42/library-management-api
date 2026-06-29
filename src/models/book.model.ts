@@ -1,4 +1,5 @@
 import mongoose, { Schema, Document } from "mongoose";
+import { GENRES, MAX_PUBLISHED_YEAR } from "../shared/constants";
 
 export interface IBookDocument extends Document {
   title: string;
@@ -28,14 +29,14 @@ const bookSchema = new Schema<IBookDocument>(
     genre: {
       type: String,
       required: true,
-      enum: ["FICTION", "NON_FICTION", "SCIENCE", "HISTORY", "BIOGRAPHY", "FANTASY"],
+      enum: GENRES,
     },
     isbn: { type: String, required: true, unique: true, trim: true },
     description: { type: String, maxlength: 2000 },
     coverImage: { type: String },
     pages: { type: Number, min: 1 },
     publisher: { type: String, trim: true },
-    publishedYear: { type: Number, min: 1000, max: 2030 },
+    publishedYear: { type: Number, min: 1000, max: MAX_PUBLISHED_YEAR },
     copies: { type: Number, required: true, min: 0 },
     availableCopies: { type: Number, required: true, min: 0 },
     tags: [{ type: String, trim: true }],

@@ -1,13 +1,7 @@
 import { z } from "zod";
+import { GENRES, MAX_PUBLISHED_YEAR } from "../shared/constants";
 
-const genreSchema = z.enum([
-  "FICTION",
-  "NON_FICTION",
-  "SCIENCE",
-  "HISTORY",
-  "BIOGRAPHY",
-  "FANTASY",
-]);
+const genreSchema = z.enum(GENRES);
 
 export const createBookSchema = z.object({
   title: z.string().min(1, "Title is required").max(200),
@@ -18,7 +12,7 @@ export const createBookSchema = z.object({
   coverImage: z.string().url().optional(),
   pages: z.number().int().positive().optional(),
   publisher: z.string().max(200).optional(),
-  publishedYear: z.number().int().min(1000).max(2030).optional(),
+  publishedYear: z.number().int().min(1000).max(MAX_PUBLISHED_YEAR).optional(),
   copies: z.number().int().min(0, "Copies must be at least 0"),
   tags: z.array(z.string()).default([]),
   shelfLocation: z.string().optional(),
