@@ -24,5 +24,6 @@ const fineSchema = new Schema<IFineDocument>(
 );
 
 fineSchema.index({ user: 1, paid: 1 });
+fineSchema.index({ borrow: 1 }, { unique: true });
 
 export const Fine = mongoose.model<IFineDocument>("Fine", fineSchema);

@@ -27,25 +27,29 @@ export function createOverdueWorker(): Worker {
         );
         const amount = overdueDays * FINE_RATE_PER_DAY * borrow.quantity;
 
-        const fine = await Fine.create({
-          user: borrow.user,
-          borrow: borrow._id,
-          amount,
-          reason: `Overdue by ${overdueDays} day(s) for "${(borrow.book as unknown as { title: string }).title}"`,
-        });
+        try {
+          const fine = await Fine.create({
+            user: borrow.user,
+            borrow: borrow._id,
+            amount,
+            reason: `Overdue by ${overdueDays} day(s) for "${(borrow.book as unknown as { title: string }).title}"`,
+          });
 
-        borrow.status = "overdue";
-        borrow.fine = fine._id;
-        await borrow.save();
+          borrow.status = "overdue";
+          borrow.fine = fine._id;
+          await borrow.save();
 
-        await User.findByIdAndUpdate(borrow.user, { $inc: { fineBalance: amount } });
+          await User.findByIdAndUpdate(borrow.user, { $inc: { fineBalance: amount } });
 
-        await notificationQueue.add("overdue", {
-          userId: borrow.user.toString(),
-          type: "overdue",
-          title: "Book Overdue",
-          message: `"${(borrow.book as unknown as { title: string }).title}" is overdue by ${overdueDays} day(s). A fine of $${amount} has been applied.`,
-        });
+          await notificationQueue.add("overdue", {
+            userId: borrow.user.toString(),
+            type: "overdue",
+            title: "Book Overdue",
+            message: `"${(borrow.book as unknown as { title: string }).title}" is overdue by ${overdueDays} day(s). A fine of $${amount} has been applied.`,
+          });
+        } catch (err: unknown) {
+          if ((err as { code?: number })?.code !== 11000) throw err;
+        }
       }
 
       if (overdueBorrows.length > 0) {

@@ -1,4 +1,5 @@
 import type { Context, Next } from "hono";
+import { logger } from "../config";
 
 export async function requestLogger(c: Context, next: Next) {
   const start = Date.now();
@@ -9,5 +10,5 @@ export async function requestLogger(c: Context, next: Next) {
 
   const duration = Date.now() - start;
   const status = c.res.status;
-  console.log(`${method} ${path} ${status} ${duration}ms`);
+  logger.info({ method, path, status, durationMs: duration }, `${method} ${path} ${status} ${duration}ms`);
 }

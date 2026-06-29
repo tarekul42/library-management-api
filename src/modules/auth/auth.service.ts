@@ -1,5 +1,5 @@
 import bcrypt from "bcryptjs";
-import jwt from "jsonwebtoken";
+import jwt, { type SignOptions } from "jsonwebtoken";
 import crypto from "node:crypto";
 import { User, type IUserDocument } from "../../models/user.model";
 import { getEnv, type Env } from "../../config";
@@ -21,13 +21,13 @@ function generateTokens(user: IUserDocument, env: Env) {
   const accessToken = jwt.sign(
     { userId: user._id.toString(), role: user.role },
     env.JWT_SECRET,
-    { expiresIn: env.JWT_EXPIRES_IN as any },
+    { expiresIn: env.JWT_EXPIRES_IN as SignOptions["expiresIn"] },
   );
 
   const refreshToken = jwt.sign(
     { userId: user._id.toString(), role: user.role },
     env.JWT_REFRESH_SECRET,
-    { expiresIn: env.JWT_REFRESH_EXPIRES_IN as any },
+    { expiresIn: env.JWT_REFRESH_EXPIRES_IN as SignOptions["expiresIn"] },
   );
 
   return { accessToken, refreshToken };

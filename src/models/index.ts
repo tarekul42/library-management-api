@@ -7,3 +7,4 @@ export { Fine } from "./fine.model";
 export { Review } from "./review.model";
 export { Notification } from "./notification.model";
 export { Reservation } from "./reservation.model";
+export { Wishlist } from "./wishlist.model";

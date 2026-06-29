@@ -1,6 +1,6 @@
 import { Book } from "../../models/book.model";
 import type { CreateBookInput, UpdateBookInput, BookQuery } from "../../schemas/book.schema";
-import { NotFoundError } from "../../shared/errors";
+import { AppError, NotFoundError } from "../../shared/errors";
 import { PAGINATION } from "../../shared/constants";
 
 export async function createBook(input: CreateBookInput) {
@@ -62,16 +62,21 @@ export async function updateBook(id: string, input: UpdateBookInput) {
   const book = await Book.findById(id);
   if (!book) throw new NotFoundError("Book not found");
 
-  const oldCopies = book.copies;
-  Object.assign(book, input);
   if (input.copies !== undefined) {
-    const borrowedCount = oldCopies - book.availableCopies;
-    book.availableCopies = Math.max(0, input.copies - borrowedCount);
-    book.available = book.availableCopies > 0;
+    const borrowedCount = book.copies - book.availableCopies;
+    const newAvailableCopies = Math.max(0, input.copies - borrowedCount);
+    const updated = await Book.findOneAndUpdate(
+      { _id: id, copies: book.copies },
+      { $set: { ...input, copies: input.copies, availableCopies: newAvailableCopies, available: newAvailableCopies > 0 } },
+      { new: true },
+    );
+    if (!updated) throw new AppError("Book was modified concurrently, please retry", 409);
+    return updated.populate("author");
   }
-  await book.save();
 
-  return book.populate("author");
+  const updated = await Book.findByIdAndUpdate(id, input, { new: true });
+  if (!updated) throw new NotFoundError("Book not found");
+  return updated.populate("author");
 }
 
 export async function deleteBook(id: string) {

@@ -1,6 +1,5 @@
 import { Hono } from "hono";
 import type { Context } from "hono";
-import PDFDocument from "pdfkit";
 import { authenticate, authorize } from "../../middleware";
 import { Borrow } from "../../models/borrow.model";
 import { Fine } from "../../models/fine.model";
@@ -185,24 +184,15 @@ reportRoutes.get("/popular", authenticate, authorize("admin"), async (c: Context
   }));
 
   if (format === "pdf") {
-    const doc = new PDFDocument({ margin: 30, size: "A4" });
-    const buffers: Buffer[] = [];
-    doc.on("data", (chunk: Buffer) => buffers.push(chunk));
-    doc.on("end", () => {});
-
-    doc.fontSize(16).text("Popular Books Report", { align: "center" });
-    doc.moveDown();
-    doc.fontSize(10);
-
-    rows.forEach((row, i) => {
-      doc.text(`${i + 1}. "${row.Title}" \u2014 ${row.BorrowCount} borrow(s)`);
-    });
-
-    doc.end();
-    const pdf = Buffer.concat(buffers);
-    c.header("Content-Type", "application/pdf");
-    c.header("Content-Disposition", 'attachment; filename="popular-books-report.pdf"');
-    return c.newResponse(pdf);
+    const pdf = await generatePDF(
+      "Popular Books Report",
+      ["#", "Title", "ISBN", "Genre", "Borrow Count"],
+      rows.map((r, i) => ({ "#": i + 1, ...r })),
+      [20, 120, 70, 60, 50],
+      "popular-books-report",
+      { layout: "portrait", fontSize: 10 },
+    );
+    return respondWithPDF(c, pdf, "popular-books-report");
   }
 
   setCSVHeaders(c, "popular-books-report");

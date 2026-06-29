@@ -1,22 +1,10 @@
 import { Hono } from "hono";
 import { v2 as cloudinary } from "cloudinary";
 import { authenticate, authorize } from "../../middleware";
-import { getEnv } from "../../config";
 
 const uploadRoutes = new Hono();
 
 uploadRoutes.post("/cover", authenticate, authorize("admin", "librarian"), async (c) => {
-  const env = getEnv();
-
-  if (!env.CLOUDINARY_CLOUD_NAME || !env.CLOUDINARY_API_KEY || !env.CLOUDINARY_API_SECRET) {
-    return c.json({ success: false, message: "Cloudinary not configured" }, 500);
-  }
-
-  cloudinary.config({
-    cloud_name: env.CLOUDINARY_CLOUD_NAME,
-    api_key: env.CLOUDINARY_API_KEY,
-    api_secret: env.CLOUDINARY_API_SECRET,
-  });
 
   const body = await c.req.parseBody();
   const file = body["file"] as File;

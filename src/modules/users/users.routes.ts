@@ -4,13 +4,14 @@ import { authenticate, authorize } from "../../middleware";
 import { User } from "../../models/user.model";
 import { Borrow } from "../../models/borrow.model";
 import { updateProfileSchema, updateUserSchema } from "../../schemas/user.schema";
-import { ValidationError } from "../../shared/errors";
+import { NotFoundError, ValidationError } from "../../shared/errors";
 
 const userRoutes = new Hono();
 
 userRoutes.get("/me", authenticate, async (c: Context) => {
   const userId = c.get("userId");
   const user = await User.findById(userId);
+  if (!user) throw new NotFoundError("User not found");
   return c.json({ success: true, message: "Profile retrieved", data: user });
 });
 
@@ -38,6 +39,7 @@ userRoutes.get("/", authenticate, authorize("admin"), async (c: Context) => {
 
 userRoutes.get("/:id", authenticate, authorize("admin"), async (c: Context) => {
   const user = await User.findById(c.req.param("id"));
+  if (!user) throw new NotFoundError("User not found");
   return c.json({ success: true, message: "User retrieved", data: user });
 });
 

@@ -1,4 +1,5 @@
 import mongoose from "mongoose";
+import { logger } from "../config";
 
 let isConnected = false;
 
@@ -8,14 +9,14 @@ export async function connectDatabase(uri: string): Promise<void> {
   try {
     await mongoose.connect(uri);
     isConnected = true;
-    console.log("Database connected successfully");
+    logger.info("Database connected successfully");
   } catch (error) {
-    console.error("Database connection failed:", error);
+    logger.error({ err: error }, "Database connection failed");
     throw error;
   }
 
   mongoose.connection.on("error", (err) => {
-    console.error("MongoDB connection error:", err);
+    logger.error({ err }, "MongoDB connection error");
   });
 
   mongoose.connection.on("disconnected", () => {

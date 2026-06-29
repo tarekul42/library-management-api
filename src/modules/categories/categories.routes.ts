@@ -39,7 +39,11 @@ categoryRoutes.put("/:id", authenticate, authorize("admin"), async (c: Context) 
   const body = await c.req.json();
   const parsed = categorySchema.partial().safeParse(body);
   if (!parsed.success) throw new ValidationError("Validation failed", parsed.error.flatten());
-  const category = await Category.findByIdAndUpdate(c.req.param("id"), parsed.data, { new: true });
+  const updateData: Record<string, unknown> = { ...parsed.data };
+  if (updateData.name && typeof updateData.name === "string") {
+    updateData.slug = updateData.name.toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "");
+  }
+  const category = await Category.findByIdAndUpdate(c.req.param("id"), updateData, { new: true });
   if (!category) throw new NotFoundError("Category not found");
   return c.json({ success: true, message: "Category updated", data: category });
 });

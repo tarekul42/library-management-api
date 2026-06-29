@@ -81,16 +81,20 @@ borrowRoutes.put("/:id/return", authenticate, async (c: Context) => {
     );
     const amount = overdueDays * FINE_RATE_PER_DAY * borrow.quantity;
 
-    const fine = await Fine.create({
-      user: borrow.user,
-      borrow: borrow._id,
-      amount,
-      reason: `Overdue by ${overdueDays} day(s) for "${book.title}"`,
-    });
-    borrow.fine = fine._id;
-    await borrow.save();
+    try {
+      const fine = await Fine.create({
+        user: borrow.user,
+        borrow: borrow._id,
+        amount,
+        reason: `Overdue by ${overdueDays} day(s) for "${book.title}"`,
+      });
+      borrow.fine = fine._id;
+      await borrow.save();
 
-    await User.findByIdAndUpdate(borrow.user, { $inc: { fineBalance: amount } });
+      await User.findByIdAndUpdate(borrow.user, { $inc: { fineBalance: amount } });
+    } catch (err: unknown) {
+      if ((err as { code?: number })?.code !== 11000) throw err;
+    }
 
     await notificationQueue.add("fine", {
       userId: borrow.user.toString(),
