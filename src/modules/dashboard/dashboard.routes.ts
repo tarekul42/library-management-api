@@ -54,4 +54,43 @@ dashboardRoutes.get("/popular-books", authenticate, authorize("admin"), async (c
   return c.json({ success: true, message: "Popular books retrieved", data: popular });
 });
 
+dashboardRoutes.get("/trends", authenticate, authorize("admin"), async (c: Context) => {
+  const twelveMonthsAgo = new Date();
+  twelveMonthsAgo.setMonth(twelveMonthsAgo.getMonth() - 12);
+
+  const trends = await Borrow.aggregate([
+    { $match: { borrowedAt: { $gte: twelveMonthsAgo } } },
+    {
+      $group: {
+        _id: {
+          year: { $year: "$borrowedAt" },
+          month: { $month: "$borrowedAt" },
+        },
+        count: { $sum: 1 },
+      },
+    },
+    { $sort: { "_id.year": 1, "_id.month": 1 } },
+    {
+      $project: {
+        _id: 0,
+        year: "$_id.year",
+        month: "$_id.month",
+        count: 1,
+      },
+    },
+  ]);
+
+  return c.json({ success: true, message: "Borrow trends retrieved", data: trends });
+});
+
+dashboardRoutes.get("/genre-distribution", authenticate, authorize("admin"), async (c: Context) => {
+  const distribution = await Book.aggregate([
+    { $group: { _id: "$genre", count: { $sum: 1 } } },
+    { $sort: { count: -1 } },
+    { $project: { _id: 0, genre: "$_id", count: 1 } },
+  ]);
+
+  return c.json({ success: true, message: "Genre distribution retrieved", data: distribution });
+});
+
 export default dashboardRoutes;
