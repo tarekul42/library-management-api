@@ -3,6 +3,7 @@ import type { Context } from "hono";
 import { authenticate, authorize } from "../../middleware";
 import { Borrow } from "../../models/borrow.model";
 import { Book } from "../../models/book.model";
+import { Reservation } from "../../models/reservation.model";
 import { createBorrowSchema } from "../../schemas/borrow.schema";
 import { AppError, NotFoundError } from "../../shared/errors";
 
@@ -50,6 +51,12 @@ borrowRoutes.put("/:id/return", authenticate, async (c: Context) => {
     book.availableCopies += borrow.quantity;
     book.available = true;
     await book.save();
+
+    const nextReservation = await Reservation.findOne({ book: book._id, status: "waiting" }).sort({ createdAt: 1 });
+    if (nextReservation) {
+      nextReservation.status = "fulfilled";
+      await nextReservation.save();
+    }
   }
 
   return c.json({ success: true, message: "Book returned successfully", data: borrow });

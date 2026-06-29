@@ -15,6 +15,7 @@ import notificationRoutes from "./modules/notifications/notifications.routes";
 import dashboardRoutes from "./modules/dashboard/dashboard.routes";
 import uploadRoutes from "./modules/uploads/uploads.routes";
 import wishlistRoutes from "./modules/wishlist/wishlist.routes";
+import reservationRoutes from "./modules/reservations/reservations.routes";
 
 const app = new Hono<{ Variables: { userId: string; userRole: string; env: Env } }>();
 
@@ -51,6 +52,7 @@ app.route("/api/notifications", notificationRoutes);
 app.route("/api/dashboard", dashboardRoutes);
 app.route("/api/uploads", uploadRoutes);
 app.route("/api/wishlist", wishlistRoutes);
+app.route("/api/reservations", reservationRoutes);
 
 app.onError(errorHandler);
 app.notFound(notFoundHandler);
