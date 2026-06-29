@@ -31,6 +31,13 @@ fineRoutes.post("/:id/pay", authenticate, async (c: Context) => {
     throw new ForbiddenError("You can only pay your own fines");
   }
   if (fine.paid) throw new AppError("Fine already paid", 400);
+  if (fine.amount <= 0) throw new AppError("Invalid fine amount", 400);
+
+  const user = await User.findById(fine.user);
+  if (!user) throw new NotFoundError("User not found");
+  if (user.fineBalance < fine.amount) {
+    throw new AppError("Insufficient fine balance", 400);
+  }
 
   fine.paid = true;
   fine.paidAt = new Date();

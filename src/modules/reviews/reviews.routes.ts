@@ -4,7 +4,7 @@ import { z } from "zod";
 import { authenticate } from "../../middleware";
 import { Review } from "../../models/review.model";
 import { Book } from "../../models/book.model";
-import { NotFoundError, ValidationError } from "../../shared/errors";
+import { AppError, NotFoundError, ValidationError } from "../../shared/errors";
 
 const createReviewSchema = z.object({
   rating: z.number().int().min(1).max(5),
@@ -29,6 +29,9 @@ reviewRoutes.post("/book/:bookId", authenticate, async (c: Context) => {
 
   const book = await Book.findById(bookId);
   if (!book) throw new NotFoundError("Book not found");
+
+  const existing = await Review.findOne({ user: userId, book: bookId });
+  if (existing) throw new AppError("You have already reviewed this book", 409);
 
   const review = await Review.create({
     user: userId,

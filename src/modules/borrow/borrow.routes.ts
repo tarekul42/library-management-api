@@ -72,7 +72,7 @@ borrowRoutes.put("/:id/return", authenticate, async (c: Context) => {
   }
 
   book.availableCopies += borrow.quantity;
-  book.available = true;
+  book.available = book.availableCopies > 0;
   await book.save();
 
   if (!borrow.fine && borrow.dueDate < new Date()) {
@@ -87,6 +87,8 @@ borrowRoutes.put("/:id/return", authenticate, async (c: Context) => {
       amount,
       reason: `Overdue by ${overdueDays} day(s) for "${book.title}"`,
     });
+    borrow.fine = fine._id;
+    await borrow.save();
 
     await User.findByIdAndUpdate(borrow.user, { $inc: { fineBalance: amount } });
 
@@ -134,10 +136,14 @@ borrowRoutes.get("/overdue", authenticate, authorize("admin"), async (c: Context
 });
 
 borrowRoutes.get("/:id", authenticate, async (c: Context) => {
+  const userId = c.get("userId");
   const borrow = await Borrow.findById(c.req.param("id"))
     .populate("user", "name email")
     .populate("book", "title isbn");
   if (!borrow) throw new NotFoundError("Borrow record not found");
+  if (borrow.user._id.toString() !== userId && c.get("userRole") !== "admin") {
+    throw new AppError("Forbidden", 403);
+  }
   return c.json({ success: true, message: "Borrow retrieved", data: borrow });
 });
 

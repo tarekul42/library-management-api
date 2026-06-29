@@ -28,7 +28,8 @@ categoryRoutes.post("/", authenticate, authorize("admin"), async (c: Context) =>
   const body = await c.req.json();
   const parsed = categorySchema.safeParse(body);
   if (!parsed.success) throw new ValidationError("Validation failed", parsed.error.flatten());
-  const category = await Category.create(parsed.data);
+  const slug = parsed.data.name.toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "");
+  const category = await Category.create({ ...parsed.data, slug });
   return c.json({ success: true, message: "Category created", data: category }, 201);
 });
 

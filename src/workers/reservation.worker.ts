@@ -18,9 +18,6 @@ export function createReservationWorker(): Worker {
     async (job) => {
       const { bookId } = job.data;
 
-      const book = await Book.findById(bookId);
-      if (!book || book.availableCopies <= 0) return;
-
       const nextReservation = await Reservation.findOneAndUpdate(
         { book: bookId, status: "waiting" },
         { status: "fulfilled" },
@@ -28,7 +25,15 @@ export function createReservationWorker(): Worker {
       );
       if (!nextReservation) return;
 
-      book.availableCopies -= 1;
+      const book = await Book.findOneAndUpdate(
+        { _id: bookId, availableCopies: { $gt: 0 } },
+        { $inc: { availableCopies: -1 } },
+        { new: true },
+      );
+      if (!book) {
+        await Reservation.findByIdAndUpdate(nextReservation._id, { status: "waiting" });
+        return;
+      }
       book.available = book.availableCopies > 0;
       await book.save();
 

@@ -62,10 +62,12 @@ export async function updateBook(id: string, input: UpdateBookInput) {
   const book = await Book.findById(id);
   if (!book) throw new NotFoundError("Book not found");
 
+  const oldCopies = book.copies;
   Object.assign(book, input);
   if (input.copies !== undefined) {
-    book.availableCopies = input.copies;
-    book.available = input.copies > 0;
+    const borrowedCount = oldCopies - book.availableCopies;
+    book.availableCopies = Math.max(0, input.copies - borrowedCount);
+    book.available = book.availableCopies > 0;
   }
   await book.save();
 

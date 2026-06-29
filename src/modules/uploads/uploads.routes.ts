@@ -25,6 +25,16 @@ uploadRoutes.post("/cover", authenticate, authorize("admin", "librarian"), async
     return c.json({ success: false, message: "No file provided" }, 400);
   }
 
+  const allowedTypes = ["image/jpeg", "image/png", "image/webp", "image/gif"];
+  if (!allowedTypes.includes(file.type)) {
+    return c.json({ success: false, message: "File must be an image (JPEG, PNG, WebP, or GIF)" }, 400);
+  }
+
+  const MAX_SIZE = 5 * 1024 * 1024;
+  if (file.size > MAX_SIZE) {
+    return c.json({ success: false, message: "File must be less than 5MB" }, 400);
+  }
+
   const arrayBuffer = await file.arrayBuffer();
   const buffer = Buffer.from(arrayBuffer);
   const b64 = buffer.toString("base64");
