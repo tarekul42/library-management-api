@@ -3,9 +3,7 @@ import { z } from "zod";
 export const createBorrowSchema = z.object({
   book: z.string().min(1, "Book ID is required"),
   quantity: z.number().int().positive("Quantity must be at least 1"),
-  dueDate: z.coerce.date({
-    errorMap: () => ({ message: "Due date must be a valid date" }),
-  }),
+  dueDate: z.coerce.date({ message: "Due date must be a valid date" }),
 });
 
 export const borrowQuerySchema = z.object({
