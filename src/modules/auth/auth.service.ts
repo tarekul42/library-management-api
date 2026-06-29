@@ -6,6 +6,17 @@ import { getEnv, type Env } from "../../config";
 import { AppError } from "../../shared/errors";
 import type { RegisterInput, LoginInput } from "../../schemas/auth.schema";
 
+const tokenBlacklist = new Set<string>();
+
+function isTokenBlacklisted(token: string): boolean {
+  return tokenBlacklist.has(token);
+}
+
+function addToBlacklist(token: string): void {
+  tokenBlacklist.add(token);
+  setTimeout(() => tokenBlacklist.delete(token), 7 * 24 * 60 * 60 * 1000);
+}
+
 function generateTokens(user: IUserDocument, env: Env) {
   const accessToken = jwt.sign(
     { userId: user._id.toString(), role: user.role },
@@ -86,6 +97,10 @@ export async function login(input: LoginInput) {
 export async function refreshToken(token: string) {
   const env = getEnv();
 
+  if (isTokenBlacklisted(token)) {
+    throw new AppError("Refresh token has been revoked", 401);
+  }
+
   try {
     const payload = jwt.verify(token, env.JWT_REFRESH_SECRET) as {
       userId: string;
@@ -96,11 +111,16 @@ export async function refreshToken(token: string) {
       throw new AppError("Invalid refresh token", 401);
     }
 
+    addToBlacklist(token);
     const tokens = generateTokens(user, env);
     return tokens;
   } catch {
     throw new AppError("Invalid or expired refresh token", 401);
   }
+}
+
+export async function logout(token: string) {
+  addToBlacklist(token);
 }
 
 export async function forgotPassword(email: string) {

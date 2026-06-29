@@ -5,6 +5,7 @@ import { authenticate, authorize } from "../../middleware";
 import { Borrow } from "../../models/borrow.model";
 import { Fine } from "../../models/fine.model";
 import { Book } from "../../models/book.model";
+import { AppError } from "../../shared/errors";
 import { generatePDF, respondWithPDF } from "../../shared/pdf";
 
 const reportRoutes = new Hono();
@@ -28,17 +29,24 @@ function setCSVHeaders(c: Context, filename: string): void {
   c.header("Content-Disposition", `attachment; filename="${filename}.csv"`);
 }
 
+function parseDateParam(value: string | undefined, label: string): Date | undefined {
+  if (!value) return undefined;
+  const date = new Date(value);
+  if (isNaN(date.getTime())) throw new AppError(`Invalid ${label} date: "${value}"`, 400);
+  return date;
+}
+
 reportRoutes.get("/borrows", authenticate, authorize("admin"), async (c: Context) => {
   const format = c.req.query("format") || "csv";
-  const from = c.req.query("from");
-  const to = c.req.query("to");
+  const from = parseDateParam(c.req.query("from"), "from");
+  const to = parseDateParam(c.req.query("to"), "to");
   const status = c.req.query("status");
 
   const filter: Record<string, unknown> = {};
   if (from || to) {
     const dateFilter: Record<string, Date> = {};
-    if (from) dateFilter.$gte = new Date(from);
-    if (to) dateFilter.$lte = new Date(to);
+    if (from) dateFilter.$gte = from;
+    if (to) dateFilter.$lte = to;
     filter.createdAt = dateFilter;
   }
   if (status) filter.status = status;
@@ -79,14 +87,14 @@ reportRoutes.get("/borrows", authenticate, authorize("admin"), async (c: Context
 
 reportRoutes.get("/fines", authenticate, authorize("admin"), async (c: Context) => {
   const format = c.req.query("format") || "csv";
-  const from = c.req.query("from");
-  const to = c.req.query("to");
+  const from = parseDateParam(c.req.query("from"), "from");
+  const to = parseDateParam(c.req.query("to"), "to");
 
   const filter: Record<string, unknown> = {};
   if (from || to) {
     const dateFilter: Record<string, Date> = {};
-    if (from) dateFilter.$gte = new Date(from);
-    if (to) dateFilter.$lte = new Date(to);
+    if (from) dateFilter.$gte = from;
+    if (to) dateFilter.$lte = to;
     filter.createdAt = dateFilter;
   }
 

@@ -27,9 +27,6 @@ export function createOverdueWorker(): Worker {
         );
         const amount = overdueDays * FINE_RATE_PER_DAY * borrow.quantity;
 
-        borrow.status = "overdue";
-        await borrow.save();
-
         const fine = await Fine.create({
           user: borrow.user,
           borrow: borrow._id,
@@ -37,6 +34,7 @@ export function createOverdueWorker(): Worker {
           reason: `Overdue by ${overdueDays} day(s) for "${(borrow.book as unknown as { title: string }).title}"`,
         });
 
+        borrow.status = "overdue";
         borrow.fine = fine._id;
         await borrow.save();
 

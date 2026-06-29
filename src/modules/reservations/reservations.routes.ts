@@ -1,18 +1,24 @@
 import { Hono } from "hono";
 import type { Context } from "hono";
+import { z } from "zod";
 import { authenticate, authorize } from "../../middleware";
 import { Reservation } from "../../models/reservation.model";
 import { Book } from "../../models/book.model";
-import { AppError, NotFoundError } from "../../shared/errors";
+import { AppError, NotFoundError, ValidationError } from "../../shared/errors";
+
+const createReservationSchema = z.object({
+  bookId: z.string().min(1, "bookId is required"),
+});
 
 const reservationRoutes = new Hono();
 
 reservationRoutes.post("/", authenticate, async (c: Context) => {
   const userId = c.get("userId");
   const body = await c.req.json();
-  const bookId = body.bookId as string;
+  const parsed = createReservationSchema.safeParse(body);
+  if (!parsed.success) throw new ValidationError("Validation failed", parsed.error.flatten());
 
-  if (!bookId) throw new AppError("bookId is required", 400);
+  const { bookId } = parsed.data;
 
   const book = await Book.findById(bookId);
   if (!book) throw new NotFoundError("Book not found");
@@ -64,7 +70,7 @@ reservationRoutes.get("/all", authenticate, authorize("admin"), async (c: Contex
 });
 
 reservationRoutes.get("/book/:bookId", authenticate, async (c: Context) => {
-  const { bookId } = c.req.param();
+  const bookId = c.req.param("bookId");
   const reservations = await Reservation.find({ book: bookId, status: "waiting" })
     .populate("user", "name email")
     .sort({ createdAt: 1 });
@@ -91,6 +97,12 @@ reservationRoutes.put("/:id/fulfill", authenticate, authorize("admin"), async (c
   if (!reservation) throw new NotFoundError("Reservation not found");
   if (reservation.status !== "waiting") {
     throw new AppError("Reservation is not in waiting status", 400);
+  }
+  if (reservation.book) {
+    const book = await Book.findById(reservation.book);
+    if (book && book.availableCopies <= 0) {
+      throw new AppError("No copies available to fulfill this reservation", 400);
+    }
   }
   reservation.status = "fulfilled";
   await reservation.save();

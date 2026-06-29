@@ -4,7 +4,7 @@ import { authenticate, authorize } from "../../middleware";
 import { Author } from "../../models/author.model";
 import { Book } from "../../models/book.model";
 import { createAuthorSchema, updateAuthorSchema } from "../../schemas/author.schema";
-import { NotFoundError } from "../../shared/errors";
+import { AppError, NotFoundError } from "../../shared/errors";
 
 const authorRoutes = new Hono();
 
@@ -40,6 +40,10 @@ authorRoutes.put("/:id", authenticate, authorize("admin", "librarian"), async (c
 });
 
 authorRoutes.delete("/:id", authenticate, authorize("admin"), async (c: Context) => {
+  const bookCount = await Book.countDocuments({ author: c.req.param("id") });
+  if (bookCount > 0) {
+    throw new AppError(`Cannot delete author: ${bookCount} book(s) still reference this author`, 400);
+  }
   const author = await Author.findByIdAndDelete(c.req.param("id"));
   if (!author) throw new NotFoundError("Author not found");
   return c.json({ success: true, message: "Author deleted", data: null });

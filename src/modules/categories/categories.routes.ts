@@ -3,7 +3,7 @@ import type { Context } from "hono";
 import { z } from "zod";
 import { authenticate, authorize } from "../../middleware";
 import { Category } from "../../models/category.model";
-import { NotFoundError, ValidationError } from "../../shared/errors";
+import { AppError, NotFoundError, ValidationError } from "../../shared/errors";
 
 const categorySchema = z.object({
   name: z.string().min(1).max(100),
@@ -29,6 +29,8 @@ categoryRoutes.post("/", authenticate, authorize("admin"), async (c: Context) =>
   const parsed = categorySchema.safeParse(body);
   if (!parsed.success) throw new ValidationError("Validation failed", parsed.error.flatten());
   const slug = parsed.data.name.toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "");
+  const existing = await Category.findOne({ slug });
+  if (existing) throw new AppError("A category with this name already exists", 409);
   const category = await Category.create({ ...parsed.data, slug });
   return c.json({ success: true, message: "Category created", data: category }, 201);
 });

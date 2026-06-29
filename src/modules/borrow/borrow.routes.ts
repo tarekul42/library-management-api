@@ -5,7 +5,7 @@ import { Borrow } from "../../models/borrow.model";
 import { Book } from "../../models/book.model";
 import { Fine } from "../../models/fine.model";
 import { User } from "../../models/user.model";
-import { createBorrowSchema } from "../../schemas/borrow.schema";
+import { createBorrowSchema, borrowQuerySchema } from "../../schemas/borrow.schema";
 import { AppError, NotFoundError } from "../../shared/errors";
 import { FINE_RATE_PER_DAY, MAX_BORROW_BOOKS, MAX_BORROW_DAYS } from "../../shared/constants";
 import { reservationQueue, notificationQueue } from "../../workers/queues";
@@ -105,17 +105,54 @@ borrowRoutes.put("/:id/return", authenticate, async (c: Context) => {
   return c.json({ success: true, message: "Book returned successfully", data: borrow });
 });
 
-borrowRoutes.get("/", authenticate, async (c: Context) => {
-  const isAdmin = c.get("userRole") === "admin";
-  const query: Record<string, unknown> = {};
-  if (!isAdmin) query.user = c.get("userId");
-  if (c.req.query("status")) query.status = c.req.query("status");
+borrowRoutes.get("/me", authenticate, async (c: Context) => {
+  const userId = c.get("userId");
+  const query = borrowQuerySchema.parse(c.req.query());
+  const filter = { user: userId };
+  if (query.status) (filter as Record<string, unknown>).status = query.status;
 
-  const borrows = await Borrow.find(query)
-    .populate("user", "name email")
-    .populate("book", "title isbn")
-    .sort({ createdAt: -1 });
-  return c.json({ success: true, message: "Borrows retrieved", data: borrows });
+  const skip = (query.page - 1) * query.limit;
+  const [data, total] = await Promise.all([
+    Borrow.find(filter)
+      .populate("user", "name email")
+      .populate("book", "title isbn")
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(query.limit),
+    Borrow.countDocuments(filter),
+  ]);
+
+  return c.json({
+    success: true,
+    message: "Borrows retrieved",
+    data,
+    meta: { page: query.page, limit: query.limit, total, totalPages: Math.ceil(total / query.limit) },
+  });
+});
+
+borrowRoutes.get("/", authenticate, authorize("admin"), async (c: Context) => {
+  const query = borrowQuerySchema.parse(c.req.query());
+  const filter: Record<string, unknown> = {};
+  if (query.status) filter.status = query.status;
+  if (query.userId) filter.user = query.userId;
+
+  const skip = (query.page - 1) * query.limit;
+  const [data, total] = await Promise.all([
+    Borrow.find(filter)
+      .populate("user", "name email")
+      .populate("book", "title isbn")
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(query.limit),
+    Borrow.countDocuments(filter),
+  ]);
+
+  return c.json({
+    success: true,
+    message: "Borrows retrieved",
+    data,
+    meta: { page: query.page, limit: query.limit, total, totalPages: Math.ceil(total / query.limit) },
+  });
 });
 
 borrowRoutes.get("/active", authenticate, authorize("admin"), async (c: Context) => {
