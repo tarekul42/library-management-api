@@ -3,9 +3,12 @@ import type { Context } from "hono";
 import { authenticate, authorize } from "../../middleware";
 import { Borrow } from "../../models/borrow.model";
 import { Book } from "../../models/book.model";
-import { Reservation } from "../../models/reservation.model";
+import { Fine } from "../../models/fine.model";
+import { User } from "../../models/user.model";
 import { createBorrowSchema } from "../../schemas/borrow.schema";
 import { AppError, NotFoundError } from "../../shared/errors";
+import { FINE_RATE_PER_DAY } from "../../shared/constants";
+import { reservationQueue, notificationQueue } from "../../workers/queues";
 
 const borrowRoutes = new Hono();
 
@@ -47,17 +50,38 @@ borrowRoutes.put("/:id/return", authenticate, async (c: Context) => {
   await borrow.save();
 
   const book = await Book.findById(borrow.book);
-  if (book) {
-    book.availableCopies += borrow.quantity;
-    book.available = true;
-    await book.save();
-
-    const nextReservation = await Reservation.findOne({ book: book._id, status: "waiting" }).sort({ createdAt: 1 });
-    if (nextReservation) {
-      nextReservation.status = "fulfilled";
-      await nextReservation.save();
-    }
+  if (!book) {
+    return c.json({ success: true, message: "Book returned successfully", data: borrow });
   }
+
+  book.availableCopies += borrow.quantity;
+  book.available = true;
+  await book.save();
+
+  if (borrow.dueDate < new Date()) {
+    const overdueDays = Math.ceil(
+      (new Date().getTime() - borrow.dueDate.getTime()) / (1000 * 60 * 60 * 24),
+    );
+    const amount = overdueDays * FINE_RATE_PER_DAY * borrow.quantity;
+
+    const fine = await Fine.create({
+      user: borrow.user,
+      borrow: borrow._id,
+      amount,
+      reason: `Overdue by ${overdueDays} day(s) for "${book.title}"`,
+    });
+
+    await User.findByIdAndUpdate(borrow.user, { $inc: { fineBalance: amount } });
+
+    await notificationQueue.add("fine", {
+      userId: borrow.user.toString(),
+      type: "fine",
+      title: "Fine Incurred",
+      message: `A fine of $${amount} has been applied for overdue return of "${book.title}".`,
+    });
+  }
+
+  await reservationQueue.add("fulfill", { bookId: book._id.toString() });
 
   return c.json({ success: true, message: "Book returned successfully", data: borrow });
 });

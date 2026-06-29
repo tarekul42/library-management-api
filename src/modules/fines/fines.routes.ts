@@ -2,6 +2,8 @@ import { Hono } from "hono";
 import type { Context } from "hono";
 import { authenticate, authorize } from "../../middleware";
 import { Fine } from "../../models/fine.model";
+import { User } from "../../models/user.model";
+import { NotFoundError } from "../../shared/errors";
 
 const fineRoutes = new Hono();
 
@@ -22,11 +24,15 @@ fineRoutes.get("/", authenticate, authorize("admin"), async (c: Context) => {
 });
 
 fineRoutes.post("/:id/pay", authenticate, async (c: Context) => {
-  const fine = await Fine.findByIdAndUpdate(
-    c.req.param("id"),
-    { paid: true, paidAt: new Date() },
-    { new: true },
-  );
+  const fine = await Fine.findById(c.req.param("id"));
+  if (!fine) throw new NotFoundError("Fine not found");
+
+  fine.paid = true;
+  fine.paidAt = new Date();
+  await fine.save();
+
+  await User.findByIdAndUpdate(fine.user, { $inc: { fineBalance: -fine.amount } });
+
   return c.json({ success: true, message: "Fine paid", data: fine });
 });
 

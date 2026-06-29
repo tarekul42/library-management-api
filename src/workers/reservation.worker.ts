@@ -1,0 +1,55 @@
+import { Worker } from "bullmq";
+import type { ConnectionOptions } from "bullmq";
+import { getRedis } from "../utils/redis";
+import { Reservation } from "../models/reservation.model";
+import { Book } from "../models/book.model";
+import { notificationQueue } from "./queues";
+import { logger } from "../config";
+
+interface ReservationJob {
+  bookId: string;
+}
+
+const conn = getRedis() as unknown as ConnectionOptions;
+
+export function createReservationWorker(): Worker {
+  const worker = new Worker<ReservationJob>(
+    "reservations",
+    async (job) => {
+      const { bookId } = job.data;
+
+      const book = await Book.findById(bookId);
+      if (!book || book.availableCopies <= 0) return;
+
+      const nextReservation = await Reservation.findOne({ book: bookId, status: "waiting" }).sort({ createdAt: 1 });
+      if (!nextReservation) return;
+
+      nextReservation.status = "fulfilled";
+      await nextReservation.save();
+
+      book.availableCopies -= 1;
+      book.available = book.availableCopies > 0;
+      await book.save();
+
+      await notificationQueue.add("reservation-fulfilled", {
+        userId: nextReservation.user.toString(),
+        type: "reservation_available",
+        title: "Reservation Fulfilled",
+        message: `Your reservation for "${book.title}" is now available. Please proceed to borrow.`,
+      });
+
+      logger.info(`Reservation ${nextReservation._id} fulfilled for book "${book.title}"`);
+    },
+    { connection: conn },
+  );
+
+  worker.on("completed", (job) => {
+    logger.info(`Reservation job ${job.id} completed`);
+  });
+
+  worker.on("failed", (job, err) => {
+    logger.error({ err }, `Reservation job ${job?.id} failed`);
+  });
+
+  return worker;
+}
