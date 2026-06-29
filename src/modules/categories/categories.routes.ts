@@ -1,8 +1,15 @@
 import { Hono } from "hono";
 import type { Context } from "hono";
+import { z } from "zod";
 import { authenticate, authorize } from "../../middleware";
 import { Category } from "../../models/category.model";
-import { NotFoundError } from "../../shared/errors";
+import { NotFoundError, ValidationError } from "../../shared/errors";
+
+const categorySchema = z.object({
+  name: z.string().min(1).max(100),
+  description: z.string().max(500).optional(),
+  parent: z.string().optional(),
+});
 
 const categoryRoutes = new Hono();
 
@@ -19,13 +26,17 @@ categoryRoutes.get("/:id", async (c: Context) => {
 
 categoryRoutes.post("/", authenticate, authorize("admin"), async (c: Context) => {
   const body = await c.req.json();
-  const category = await Category.create(body);
+  const parsed = categorySchema.safeParse(body);
+  if (!parsed.success) throw new ValidationError("Validation failed", parsed.error.flatten());
+  const category = await Category.create(parsed.data);
   return c.json({ success: true, message: "Category created", data: category }, 201);
 });
 
 categoryRoutes.put("/:id", authenticate, authorize("admin"), async (c: Context) => {
   const body = await c.req.json();
-  const category = await Category.findByIdAndUpdate(c.req.param("id"), body, { new: true });
+  const parsed = categorySchema.partial().safeParse(body);
+  if (!parsed.success) throw new ValidationError("Validation failed", parsed.error.flatten());
+  const category = await Category.findByIdAndUpdate(c.req.param("id"), parsed.data, { new: true });
   if (!category) throw new NotFoundError("Category not found");
   return c.json({ success: true, message: "Category updated", data: category });
 });

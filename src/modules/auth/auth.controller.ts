@@ -29,8 +29,8 @@ export async function logout(c: Context) {
 export async function forgotPassword(c: Context) {
   const body = await c.req.json();
   const input = forgotPasswordSchema.parse(body);
-  const result = await authService.forgotPassword(input.email);
-  return c.json({ success: true, message: "Password reset email sent", data: result });
+  await authService.forgotPassword(input.email);
+  return c.json({ success: true, message: "Password reset email sent" });
 }
 
 export async function resetPassword(c: Context) {

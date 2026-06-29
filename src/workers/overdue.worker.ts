@@ -18,6 +18,7 @@ export function createOverdueWorker(): Worker {
       const overdueBorrows = await Borrow.find({
         status: "active",
         dueDate: { $lt: now },
+        fine: { $exists: false },
       }).populate("book", "title");
 
       for (const borrow of overdueBorrows) {

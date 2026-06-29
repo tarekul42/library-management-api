@@ -2,6 +2,7 @@ import { Hono } from "hono";
 import type { Context } from "hono";
 import { authenticate } from "../../middleware";
 import { Notification } from "../../models/notification.model";
+import { NotFoundError, ForbiddenError } from "../../shared/errors";
 
 const notificationRoutes = new Hono();
 
@@ -14,11 +15,15 @@ notificationRoutes.get("/me", authenticate, async (c: Context) => {
 });
 
 notificationRoutes.put("/:id/read", authenticate, async (c: Context) => {
-  const notification = await Notification.findByIdAndUpdate(
-    c.req.param("id"),
-    { read: true, readAt: new Date() },
-    { new: true },
-  );
+  const userId = c.get("userId");
+  const notification = await Notification.findById(c.req.param("id"));
+  if (!notification) throw new NotFoundError("Notification not found");
+  if (notification.user.toString() !== userId) {
+    throw new ForbiddenError("You can only read your own notifications");
+  }
+  notification.read = true;
+  notification.readAt = new Date();
+  await notification.save();
   return c.json({ success: true, message: "Notification marked as read", data: notification });
 });
 

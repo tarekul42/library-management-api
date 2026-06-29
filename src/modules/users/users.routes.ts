@@ -3,6 +3,8 @@ import type { Context } from "hono";
 import { authenticate, authorize } from "../../middleware";
 import { User } from "../../models/user.model";
 import { Borrow } from "../../models/borrow.model";
+import { updateProfileSchema, updateUserSchema } from "../../schemas/user.schema";
+import { ValidationError } from "../../shared/errors";
 
 const userRoutes = new Hono();
 
@@ -15,7 +17,9 @@ userRoutes.get("/me", authenticate, async (c: Context) => {
 userRoutes.put("/me", authenticate, async (c: Context) => {
   const userId = c.get("userId");
   const body = await c.req.json();
-  const user = await User.findByIdAndUpdate(userId, body, { new: true });
+  const parsed = updateProfileSchema.safeParse(body);
+  if (!parsed.success) throw new ValidationError("Validation failed", parsed.error.flatten());
+  const user = await User.findByIdAndUpdate(userId, parsed.data, { new: true });
   return c.json({ success: true, message: "Profile updated", data: user });
 });
 
@@ -39,7 +43,9 @@ userRoutes.get("/:id", authenticate, authorize("admin"), async (c: Context) => {
 
 userRoutes.put("/:id", authenticate, authorize("admin"), async (c: Context) => {
   const body = await c.req.json();
-  const user = await User.findByIdAndUpdate(c.req.param("id"), body, { new: true });
+  const parsed = updateUserSchema.safeParse(body);
+  if (!parsed.success) throw new ValidationError("Validation failed", parsed.error.flatten());
+  const user = await User.findByIdAndUpdate(c.req.param("id"), parsed.data, { new: true });
   return c.json({ success: true, message: "User updated", data: user });
 });
 

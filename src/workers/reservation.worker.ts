@@ -21,11 +21,12 @@ export function createReservationWorker(): Worker {
       const book = await Book.findById(bookId);
       if (!book || book.availableCopies <= 0) return;
 
-      const nextReservation = await Reservation.findOne({ book: bookId, status: "waiting" }).sort({ createdAt: 1 });
+      const nextReservation = await Reservation.findOneAndUpdate(
+        { book: bookId, status: "waiting" },
+        { status: "fulfilled" },
+        { sort: { createdAt: 1 }, new: true },
+      );
       if (!nextReservation) return;
-
-      nextReservation.status = "fulfilled";
-      await nextReservation.save();
 
       book.availableCopies -= 1;
       book.available = book.availableCopies > 0;

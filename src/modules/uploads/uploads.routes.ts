@@ -1,10 +1,11 @@
 import { Hono } from "hono";
 import { v2 as cloudinary } from "cloudinary";
+import { authenticate, authorize } from "../../middleware";
 import { getEnv } from "../../config";
 
 const uploadRoutes = new Hono();
 
-uploadRoutes.post("/cover", async (c) => {
+uploadRoutes.post("/cover", authenticate, authorize("admin", "librarian"), async (c) => {
   const env = getEnv();
 
   if (!env.CLOUDINARY_CLOUD_NAME || !env.CLOUDINARY_API_KEY || !env.CLOUDINARY_API_SECRET) {

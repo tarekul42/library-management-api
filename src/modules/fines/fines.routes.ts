@@ -3,7 +3,7 @@ import type { Context } from "hono";
 import { authenticate, authorize } from "../../middleware";
 import { Fine } from "../../models/fine.model";
 import { User } from "../../models/user.model";
-import { NotFoundError } from "../../shared/errors";
+import { NotFoundError, ForbiddenError, AppError } from "../../shared/errors";
 
 const fineRoutes = new Hono();
 
@@ -24,8 +24,13 @@ fineRoutes.get("/", authenticate, authorize("admin"), async (c: Context) => {
 });
 
 fineRoutes.post("/:id/pay", authenticate, async (c: Context) => {
+  const userId = c.get("userId");
   const fine = await Fine.findById(c.req.param("id"));
   if (!fine) throw new NotFoundError("Fine not found");
+  if (fine.user.toString() !== userId && c.get("userRole") !== "admin") {
+    throw new ForbiddenError("You can only pay your own fines");
+  }
+  if (fine.paid) throw new AppError("Fine already paid", 400);
 
   fine.paid = true;
   fine.paidAt = new Date();

@@ -1,9 +1,15 @@
 import { Hono } from "hono";
 import type { Context } from "hono";
+import { z } from "zod";
 import { authenticate } from "../../middleware";
 import { Review } from "../../models/review.model";
 import { Book } from "../../models/book.model";
-import { NotFoundError } from "../../shared/errors";
+import { NotFoundError, ValidationError } from "../../shared/errors";
+
+const createReviewSchema = z.object({
+  rating: z.number().int().min(1).max(5),
+  comment: z.string().max(2000).optional(),
+});
 
 const reviewRoutes = new Hono();
 
@@ -17,6 +23,8 @@ reviewRoutes.get("/book/:bookId", async (c: Context) => {
 reviewRoutes.post("/book/:bookId", authenticate, async (c: Context) => {
   const userId = c.get("userId");
   const body = await c.req.json();
+  const parsed = createReviewSchema.safeParse(body);
+  if (!parsed.success) throw new ValidationError("Validation failed", parsed.error.flatten());
   const bookId = c.req.param("bookId");
 
   const book = await Book.findById(bookId);
@@ -25,8 +33,8 @@ reviewRoutes.post("/book/:bookId", authenticate, async (c: Context) => {
   const review = await Review.create({
     user: userId,
     book: bookId,
-    rating: body.rating,
-    comment: body.comment,
+    rating: parsed.data.rating,
+    comment: parsed.data.comment,
   });
 
   const stats = await Review.aggregate([
