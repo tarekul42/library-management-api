@@ -3,7 +3,7 @@ import type { ConnectionOptions } from "bullmq";
 import { getRedis } from '../utils/redis.js';
 import { Reservation } from '../models/reservation.model.js';
 import { Book } from '../models/book.model.js';
-import { notificationQueue } from './queues.js';
+import { getNotificationQueue } from './queues.js';
 import { logger } from '../config/index.js';
 
 interface ReservationJob {
@@ -34,10 +34,8 @@ export function createReservationWorker(): Worker {
         await Reservation.findByIdAndUpdate(nextReservation._id, { status: "waiting" });
         return;
       }
-      book.available = book.availableCopies > 0;
-      await book.save();
 
-      await notificationQueue.add("reservation-fulfilled", {
+      await getNotificationQueue().add("reservation-fulfilled", {
         userId: nextReservation.user.toString(),
         type: "reservation_available",
         title: "Reservation Fulfilled",

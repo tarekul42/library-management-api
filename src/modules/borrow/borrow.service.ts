@@ -1,11 +1,12 @@
-import { Borrow } from '../../models/borrow.model.js';
+import { Borrow, IBorrowDocument } from '../../models/borrow.model.js';
 import { Book } from '../../models/book.model.js';
 import { Fine } from '../../models/fine.model.js';
 import { User } from '../../models/user.model.js';
 import { AppError, NotFoundError } from '../../shared/errors.js';
 import { MAX_BORROW_BOOKS, MAX_BORROW_DAYS } from '../../shared/constants.js';
 import { calculateOverdueDays, calculateFineAmount } from '../../shared/overdue.js';
-import { notificationQueue, reservationQueue } from '../../workers/queues.js';
+import { getNotificationQueue, getReservationQueue } from '../../workers/queues.js';
+import { PaginationQuery, IPaginatedResult } from '../../shared/types.js';
 
 export async function createBorrow(userId: string, input: { book: string; dueDate: Date; quantity: number }) {
   const now = new Date();
@@ -13,6 +14,10 @@ export async function createBorrow(userId: string, input: { book: string; dueDat
   maxDue.setDate(maxDue.getDate() + MAX_BORROW_DAYS);
   if (input.dueDate > maxDue) {
     throw new AppError(`Due date cannot exceed ${MAX_BORROW_DAYS} days from today`, 400);
+  }
+
+  if (input.dueDate < now) {
+    throw new AppError("Due date cannot be in the past", 400);
   }
 
   const [activeCount, overdueCount] = await Promise.all([
@@ -56,12 +61,14 @@ export async function returnBorrow(borrowId: string, userId: string, userRole: s
   borrow.status = "returned";
   await borrow.save();
 
-  const book = await Book.findById(borrow.book);
-  if (book) {
-    book.availableCopies += borrow.quantity;
-    book.available = book.availableCopies > 0;
-    await book.save();
-  }
+  const book = await Book.findByIdAndUpdate(
+    borrow.book,
+    [
+      { $set: { availableCopies: { $add: ["$availableCopies", borrow.quantity] } } },
+      { $set: { available: { $gt: ["$availableCopies", 0] } } },
+    ],
+    { new: true }
+  );
 
   if (!borrow.fine && borrow.dueDate < new Date()) {
     const overdueDays = calculateOverdueDays(borrow.dueDate);
@@ -81,7 +88,7 @@ export async function returnBorrow(borrowId: string, userId: string, userRole: s
       if ((err as { code?: number })?.code !== 11000) throw err;
     }
 
-    await notificationQueue.add("fine", {
+    await getNotificationQueue().add("fine", {
       userId: borrow.user.toString(),
       type: "fine",
       title: "Fine Incurred",
@@ -89,52 +96,40 @@ export async function returnBorrow(borrowId: string, userId: string, userRole: s
     });
   }
 
-  await reservationQueue.add("fulfill", { bookId: (book?._id ?? borrow.book).toString() });
+  await getReservationQueue().add("fulfill", { bookId: (book?._id ?? borrow.book).toString() });
 
   return borrow;
 }
 
-export async function getUserBorrows(userId: string, query: { page: number; limit: number; status?: string }) {
-  const filter: Record<string, unknown> = { user: userId };
-  if (query.status) filter.status = query.status;
+async function getBorrows(
+  filter: Record<string, unknown>,
+  query: PaginationQuery,
+): Promise<IPaginatedResult<IBorrowDocument>> {
+  const page = Math.max(1, query.page || 1);
+  const limit = Math.min(100, Math.max(1, query.limit || 10));
+  const skip = (page - 1) * limit;
 
-  const skip = (query.page - 1) * query.limit;
   const [data, total] = await Promise.all([
     Borrow.find(filter)
+      .populate("book", "title author isbn coverImage")
       .populate("user", "name email")
-      .populate("book", "title isbn")
-      .sort({ createdAt: -1 })
+      .sort(query.sort || { createdAt: -1 })
       .skip(skip)
-      .limit(query.limit),
+      .limit(limit),
     Borrow.countDocuments(filter),
   ]);
 
-  return {
-    data,
-    meta: { page: query.page, limit: query.limit, total, totalPages: Math.ceil(total / query.limit) },
-  };
+  return { data, meta: { page, limit, total, totalPages: Math.ceil(total / limit) } };
 }
 
-export async function getAllBorrows(query: { page: number; limit: number; status?: string; userId?: string }) {
+export async function getUserBorrows(userId: string, query: PaginationQuery): Promise<IPaginatedResult<IBorrowDocument>> {
+  return getBorrows({ user: userId }, query);
+}
+
+export async function getAllBorrows(query: PaginationQuery): Promise<IPaginatedResult<IBorrowDocument>> {
   const filter: Record<string, unknown> = {};
   if (query.status) filter.status = query.status;
-  if (query.userId) filter.user = query.userId;
-
-  const skip = (query.page - 1) * query.limit;
-  const [data, total] = await Promise.all([
-    Borrow.find(filter)
-      .populate("user", "name email")
-      .populate("book", "title isbn")
-      .sort({ createdAt: -1 })
-      .skip(skip)
-      .limit(query.limit),
-    Borrow.countDocuments(filter),
-  ]);
-
-  return {
-    data,
-    meta: { page: query.page, limit: query.limit, total, totalPages: Math.ceil(total / query.limit) },
-  };
+  return getBorrows(filter, query);
 }
 
 export async function getActiveBorrows() {

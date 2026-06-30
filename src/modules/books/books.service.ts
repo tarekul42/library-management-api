@@ -1,7 +1,7 @@
 import { Book } from '../../models/book.model.js';
 import type { CreateBookInput, UpdateBookInput, BookQuery } from '../../schemas/book.schema.js';
 import { AppError, NotFoundError } from '../../shared/errors.js';
-import { PAGINATION } from '../../shared/constants.js';
+import { paginate } from '../../shared/pagination.js';
 
 export async function createBook(input: CreateBookInput) {
   const book = await Book.create({
@@ -13,10 +13,6 @@ export async function createBook(input: CreateBookInput) {
 }
 
 export async function getBooks(query: BookQuery) {
-  const page = query.page || PAGINATION.DEFAULT_PAGE;
-  const limit = Math.min(query.limit || PAGINATION.DEFAULT_LIMIT, PAGINATION.MAX_LIMIT);
-  const skip = (page - 1) * limit;
-
   const filter: Record<string, unknown> = {};
 
   if (query.search) {
@@ -32,24 +28,7 @@ export async function getBooks(query: BookQuery) {
   const sortField = query.sortBy || "createdAt";
   const sortOrder = query.sortOrder === "asc" ? 1 : -1;
 
-  const [data, total] = await Promise.all([
-    Book.find(filter)
-      .populate("author", "name")
-      .sort({ [sortField]: sortOrder })
-      .skip(skip)
-      .limit(limit),
-    Book.countDocuments(filter),
-  ]);
-
-  return {
-    data,
-    meta: {
-      page,
-      limit,
-      total,
-      totalPages: Math.ceil(total / limit),
-    },
-  };
+  return paginate(Book, filter, { page: query.page, limit: query.limit, sort: { [sortField]: sortOrder } }, "author name");
 }
 
 export async function getBookById(id: string) {

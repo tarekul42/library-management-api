@@ -21,7 +21,12 @@ export async function payFine(fineId: string, userId: string) {
   if (!fine) throw new NotFoundError("Fine not found");
   if (fine.user.toString() !== userId) throw new AppError("Unauthorized", 403);
   if (fine.paid) throw new AppError("Fine already paid", 400);
-  if (fine.amount <= 0) throw new AppError("Invalid fine amount", 400);
+  if (fine.amount <= 0) {
+    fine.paid = true;
+    fine.paidAt = new Date();
+    await fine.save();
+    return fine;
+  }
 
   const user = await User.findById(userId);
   if (!user) throw new NotFoundError("User not found");

@@ -37,7 +37,7 @@ app.use("*", corsMiddleware);
 app.use("*", securityHeadersMiddleware);
 app.use("*", compressionMiddleware);
 app.use("*", apiRateLimiter);
-app.use("*", authRateLimiter);
+app.use("/api/auth/*", authRateLimiter);
 app.use("*", requestLogger);
 
 app.get("/", (c) =>
