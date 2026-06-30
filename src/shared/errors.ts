@@ -64,7 +64,7 @@ export async function errorHandler(err: Error, c: Context) {
       error: {
         code: 500,
         description:
-          process.env.NODE_ENV === "development"
+          (process.env.NODE_ENV ?? "development") === "development"
             ? err.message
             : "Something went wrong",
       },

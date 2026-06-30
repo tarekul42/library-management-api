@@ -1,5 +1,6 @@
 import type { Context } from "hono";
 import { createBookSchema, updateBookSchema, bookQuerySchema } from "../../schemas/book.schema";
+import { validateObjectId } from "../../shared/utils";
 import * as bookService from "./books.service";
 
 export async function createBook(c: Context) {
@@ -16,13 +17,15 @@ export async function getBooks(c: Context) {
 }
 
 export async function getBookById(c: Context) {
-  const id = c.req.param("bookId")!;
+  const id = c.req.param("bookId") ?? "";
+  validateObjectId(id, "Book ID");
   const data = await bookService.getBookById(id);
   return c.json({ success: true, message: "Book retrieved successfully", data });
 }
 
 export async function updateBook(c: Context) {
-  const id = c.req.param("bookId")!;
+  const id = c.req.param("bookId") ?? "";
+  validateObjectId(id, "Book ID");
   const body = await c.req.json();
   const input = updateBookSchema.parse(body);
   const data = await bookService.updateBook(id, input);
@@ -30,7 +33,8 @@ export async function updateBook(c: Context) {
 }
 
 export async function deleteBook(c: Context) {
-  const id = c.req.param("bookId")!;
+  const id = c.req.param("bookId") ?? "";
+  validateObjectId(id, "Book ID");
   await bookService.deleteBook(id);
   return c.json({ success: true, message: "Book deleted successfully", data: null });
 }

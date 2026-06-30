@@ -3,18 +3,19 @@ import type { ConnectionOptions } from "bullmq";
 import { getRedis } from "../utils/redis";
 
 const conn = getRedis() as unknown as ConnectionOptions;
+const defaultJobOptions = { attempts: 3, backoff: { type: "exponential" as const, delay: 2000 } };
 
-export const notificationQueue = new Queue("notifications", {
-  connection: conn,
-  defaultJobOptions: { attempts: 3, backoff: { type: "exponential", delay: 2000 } },
-});
+function createQueue<T>(name: string): Queue<T> {
+  return new Queue<T>(name, { connection: conn, defaultJobOptions });
+}
 
-export const overdueQueue = new Queue("overdue", {
-  connection: conn,
-  defaultJobOptions: { attempts: 3, backoff: { type: "exponential", delay: 2000 } },
-});
+export const notificationQueue = createQueue<{
+  userId: string;
+  type: string;
+  title: string;
+  message: string;
+}>("notifications");
 
-export const reservationQueue = new Queue("reservations", {
-  connection: conn,
-  defaultJobOptions: { attempts: 3, backoff: { type: "exponential", delay: 2000 } },
-});
+export const overdueQueue = createQueue("overdue");
+
+export const reservationQueue = createQueue<{ bookId: string }>("reservations");

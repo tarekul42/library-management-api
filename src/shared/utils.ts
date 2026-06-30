@@ -12,6 +12,7 @@ export async function findByIdOrThrow<T extends Document>(
   id: string,
   message?: string,
 ): Promise<T> {
+  validateObjectId(id, `${model.modelName} ID`);
   const doc = await model.findById(id);
   if (!doc) throw new NotFoundError(message ?? `${model.modelName} not found`);
   return doc;

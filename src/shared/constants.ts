@@ -9,7 +9,9 @@ export const GENRES = [
 
 export type Genre = typeof GENRES[number];
 
-export const MAX_PUBLISHED_YEAR = new Date().getFullYear() + 5;
+export function getMaxPublishedYear(): number {
+  return new Date().getFullYear() + 5;
+}
 
 export const PAGINATION = {
   DEFAULT_PAGE: 1,

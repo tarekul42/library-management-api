@@ -6,7 +6,7 @@ import { Fine } from "../models/fine.model";
 import { User } from "../models/user.model";
 import { notificationQueue, overdueQueue } from "./queues";
 import { logger } from "../config";
-import { FINE_RATE_PER_DAY } from "../shared/constants";
+import { calculateOverdueDays, calculateFineAmount } from "../shared/overdue";
 
 const conn = getRedis() as unknown as ConnectionOptions;
 
@@ -22,10 +22,8 @@ export function createOverdueWorker(): Worker {
       }).populate("book", "title");
 
       for (const borrow of overdueBorrows) {
-        const overdueDays = Math.ceil(
-          (now.getTime() - borrow.dueDate.getTime()) / (1000 * 60 * 60 * 24),
-        );
-        const amount = overdueDays * FINE_RATE_PER_DAY * borrow.quantity;
+        const overdueDays = calculateOverdueDays(borrow.dueDate, now);
+        const amount = calculateFineAmount(overdueDays, borrow.quantity);
 
         try {
           const fine = await Fine.create({

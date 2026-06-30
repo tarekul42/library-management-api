@@ -1,13 +1,17 @@
 import PDFDocument from "pdfkit";
 import type { Context } from "hono";
 
+function getColumnWidths(headers: string[], totalWidth: number = 700): number[] {
+  const avg = Math.floor(totalWidth / headers.length);
+  return headers.map((h) => Math.max(60, avg));
+}
+
 export function generatePDF(
   title: string,
   headers: string[],
   rows: Record<string, unknown>[],
-  colWidths: number[],
   filename: string,
-  options?: { layout?: "portrait" | "landscape"; fontSize?: number },
+  options?: { layout?: "portrait" | "landscape"; fontSize?: number; colWidths?: number[] },
 ): Promise<Buffer> {
   return new Promise((resolve, reject) => {
     const doc = new PDFDocument({
@@ -25,12 +29,13 @@ export function generatePDF(
     doc.moveDown();
     doc.fontSize(fontSize);
 
+    const colWidths = options?.colWidths ?? getColumnWidths(headers);
     let y = doc.y;
     const left = 30;
 
     headers.forEach((h, i) => {
       const x = left + colWidths.slice(0, i).reduce((a, b) => a + b, 0);
-      doc.font("Helvetica-Bold").text(h, x, y, { width: colWidths[i] });
+      doc.font("Helvetica-Bold").text(h, x, y, { width: colWidths[i], lineBreak: false });
     });
     y += 14;
     doc.font("Helvetica");
