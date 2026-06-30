@@ -1,29 +1,22 @@
 name: CI
 
 on:
-  pull_request:
   push:
-    branches: [main, develop, upgrade]
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
-permissions:
-  contents: read
+    branches-ignore:
+      - main
+  pull_request:
 
 jobs:
-  quality:
+  ci:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
-        with:
-          version: latest
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-          cache: "pnpm"
+          cache: pnpm
       - run: pnpm install --frozen-lockfile
+      - run: pnpm lint
       - run: pnpm typecheck
       - run: pnpm build

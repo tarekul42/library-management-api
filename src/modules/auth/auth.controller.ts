@@ -24,7 +24,7 @@ export async function refresh(c: Context) {
 }
 
 export async function logout(c: Context) {
-  let body: Record<string, unknown> = {};
+  let body: Record<string, unknown>;
   try {
     body = await c.req.json();
   } catch {

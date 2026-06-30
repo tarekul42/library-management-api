@@ -3,7 +3,7 @@ import type { Context } from "hono";
 
 function getColumnWidths(headers: string[], totalWidth: number = 700): number[] {
   const avg = Math.floor(totalWidth / headers.length);
-  return headers.map((h) => Math.max(60, avg));
+  return headers.map(() => Math.max(60, avg));
 }
 
 export function generatePDF(
