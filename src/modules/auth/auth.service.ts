@@ -2,7 +2,7 @@ import bcrypt from "bcryptjs";
 import jwt, { type SignOptions } from "jsonwebtoken";
 import crypto from "node:crypto";
 import { User, type IUserDocument } from '../../models/user.model.js';
-import { getEnv, type Env } from '../../config/index.js';
+import { getEnv, logger, type Env } from '../../config/index.js';
 import { AppError } from '../../shared/errors.js';
 import type { RegisterInput, LoginInput } from '../../schemas/auth.schema.js';
 import { getRedis } from '../../utils/redis.js';
@@ -17,6 +17,7 @@ async function isTokenBlacklisted(token: string): Promise<boolean> {
     const exists = await redis.exists(blacklistKey(token));
     return exists === 1;
   } catch {
+    logger.warn("Redis unavailable in isTokenBlacklisted — treating token as valid");
     return false;
   }
 }
@@ -26,7 +27,7 @@ async function addToBlacklist(token: string): Promise<void> {
     const redis = getRedis();
     await redis.set(blacklistKey(token), "1", "EX", 7 * 24 * 60 * 60);
   } catch {
-    // Redis unavailable; token will remain valid until expiry
+    logger.warn("Redis unavailable in addToBlacklist — token revocation skipped");
   }
 }
 
@@ -136,6 +137,10 @@ export async function logout(token: string) {
   await addToBlacklist(token);
 }
 
+function hashToken(token: string): string {
+  return crypto.createHash("sha256").update(token).digest("hex");
+}
+
 export async function forgotPassword(email: string) {
   const user = await User.findOne({ email });
   if (!user) {
@@ -143,34 +148,27 @@ export async function forgotPassword(email: string) {
   }
 
   const resetToken = crypto.randomBytes(32).toString("hex");
-  const resetTokenHash = await bcrypt.hash(resetToken, 10);
+  const tokenHash = hashToken(resetToken);
 
-  user.resetPasswordToken = resetTokenHash;
+  user.resetPasswordToken = tokenHash;
   user.resetPasswordExpires = new Date(Date.now() + 60 * 60 * 1000);
   await user.save();
 }
 
 export async function resetPassword(token: string, password: string) {
-  const users = await User.find({
+  const tokenHash = hashToken(token);
+  const user = await User.findOne({
+    resetPasswordToken: tokenHash,
     resetPasswordExpires: { $gt: new Date() },
-    resetPasswordToken: { $ne: null },
-  }).select("+resetPasswordToken");
+  });
 
-  let matchedUser: IUserDocument | null = null;
-  for (const u of users) {
-    if (u.resetPasswordToken && (await bcrypt.compare(token, u.resetPasswordToken))) {
-      matchedUser = u;
-      break;
-    }
-  }
-
-  if (!matchedUser) {
+  if (!user) {
     throw new AppError("Invalid or expired reset token", 400);
   }
 
   const hashedPassword = await bcrypt.hash(password, 12);
-  matchedUser.password = hashedPassword;
-  matchedUser.resetPasswordToken = undefined;
-  matchedUser.resetPasswordExpires = undefined;
-  await matchedUser.save();
+  user.password = hashedPassword;
+  user.resetPasswordToken = undefined;
+  user.resetPasswordExpires = undefined;
+  await user.save();
 }

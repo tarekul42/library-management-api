@@ -30,8 +30,9 @@ export async function logout(c: Context) {
   } catch {
     body = {};
   }
-  if (body.refreshToken) {
-    await authService.logout(body.refreshToken as string);
+  const token = body.refreshToken;
+  if (typeof token === "string" && token.length > 0) {
+    await authService.logout(token);
   }
   return c.json({ success: true, message: "Logged out successfully" });
 }

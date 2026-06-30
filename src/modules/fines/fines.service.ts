@@ -28,6 +28,7 @@ export async function payFine(fineId: string, userId: string) {
   if (user.fineBalance < fine.amount) throw new AppError("Insufficient balance", 400);
 
   fine.paid = true;
+  fine.paidAt = new Date();
   await fine.save();
 
   await User.findByIdAndUpdate(userId, { $inc: { fineBalance: -fine.amount } });

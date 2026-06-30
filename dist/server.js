@@ -1,9 +1,11 @@
 import { serve } from "@hono/node-server";
 import { v2 as cloudinary } from "cloudinary";
-import app from "./app";
-import { getEnv, logger } from "./config";
-import { connectDatabase } from "./utils/connection";
-import { startWorkers, stopWorkers } from "./workers";
+import app from './app.js';
+import { getEnv, logger } from './config/index.js';
+import { connectDatabase, disconnectDatabase } from './utils/connection.js';
+import { disconnectRedis } from './utils/redis.js';
+import { startWorkers, stopWorkers } from './workers/index.js';
+let server = null;
 async function main() {
     const env = getEnv();
     if (env.CLOUDINARY_CLOUD_NAME && env.CLOUDINARY_API_KEY && env.CLOUDINARY_API_SECRET) {
@@ -16,22 +18,24 @@ async function main() {
     }
     await connectDatabase(env.DATABASE_URL);
     await startWorkers();
-    serve({ fetch: app.fetch, port: env.PORT }, (info) => {
+    server = serve({ fetch: app.fetch, port: env.PORT }, (info) => {
         logger.info(`API server running on http://localhost:${info.port}`);
     });
 }
-process.on("SIGTERM", async () => {
-    logger.info("SIGTERM received, shutting down...");
+async function shutdown() {
+    logger.info("Shutting down gracefully...");
+    if (server) {
+        server.close();
+    }
     await stopWorkers();
+    await disconnectDatabase();
+    await disconnectRedis();
     process.exit(0);
-});
-process.on("SIGINT", async () => {
-    logger.info("SIGINT received, shutting down...");
-    await stopWorkers();
-    process.exit(0);
-});
+}
+process.on("SIGTERM", shutdown);
+process.on("SIGINT", shutdown);
 main().catch((err) => {
-    logger.error("Failed to start server:", err);
+    logger.error({ err }, "Failed to start server");
     process.exit(1);
 });
 //# sourceMappingURL=server.js.map

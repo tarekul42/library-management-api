@@ -30,7 +30,7 @@ export async function getMyHistory(userId: string, page: number, limit: number) 
 export async function getAll(page: number, limit: number) {
   const skip = (page - 1) * limit;
   const [users, total] = await Promise.all([
-    User.find().skip(skip).limit(limit),
+    User.find().select("-address -phone").skip(skip).limit(limit),
     User.countDocuments(),
   ]);
   return { data: users, meta: { page, limit, total, totalPages: Math.ceil(total / limit) } };

@@ -45,6 +45,16 @@ async function shutdown() {
 process.on("SIGTERM", shutdown);
 process.on("SIGINT", shutdown);
 
+process.on("uncaughtException", (err) => {
+  logger.error({ err }, "Uncaught exception — shutting down");
+  shutdown();
+});
+
+process.on("unhandledRejection", (reason) => {
+  logger.error({ err: reason }, "Unhandled rejection — shutting down");
+  shutdown();
+});
+
 main().catch((err) => {
   logger.error({ err }, "Failed to start server");
   process.exit(1);

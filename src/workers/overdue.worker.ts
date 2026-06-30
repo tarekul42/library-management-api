@@ -46,7 +46,14 @@ export function createOverdueWorker(): Worker {
             message: `"${(borrow.book as unknown as { title: string }).title}" is overdue by ${overdueDays} day(s). A fine of $${amount} has been applied.`,
           });
         } catch (err: unknown) {
-          if ((err as { code?: number })?.code !== 11000) throw err;
+          const code = (err as { code?: number })?.code;
+          if (code === 11000) {
+            logger.warn({ borrowId: borrow._id }, "Fine already exists for overdue borrow — marking as overdue without duplicate fine");
+            borrow.status = "overdue";
+            await borrow.save();
+          } else {
+            logger.error({ err, borrowId: borrow._id }, "Failed to process overdue borrow");
+          }
         }
       }
 

@@ -10,7 +10,7 @@ export async function getMyNotifications(userId: string) {
 export async function markRead(id: string, userId: string) {
   const notification = await Notification.findOneAndUpdate(
     { _id: id, user: userId },
-    { read: true },
+    { read: true, readAt: new Date() },
     { new: true },
   );
   if (!notification) throw new NotFoundError("Notification not found");
@@ -18,5 +18,5 @@ export async function markRead(id: string, userId: string) {
 }
 
 export async function markAllRead(userId: string) {
-  await Notification.updateMany({ user: userId, read: false }, { read: true });
+  await Notification.updateMany({ user: userId, read: false }, { read: true, readAt: new Date() });
 }
