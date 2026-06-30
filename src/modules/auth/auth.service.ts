@@ -127,7 +127,10 @@ export async function refreshToken(token: string) {
 
     await addToBlacklist(token);
     const tokens = generateTokens(user, env);
-    return tokens;
+    return {
+      ...tokens,
+      user: { _id: user._id, name: user.name, email: user.email, role: user.role },
+    };
   } catch {
     throw new AppError("Invalid or expired refresh token", 401);
   }
