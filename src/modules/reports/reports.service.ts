@@ -1,8 +1,8 @@
-import { Borrow } from "../../models/borrow.model";
-import { Fine } from "../../models/fine.model";
-import { Book } from "../../models/book.model";
-import { AppError } from "../../shared/errors";
-import { generatePDF } from "../../shared/pdf";
+import { Borrow } from '../../models/borrow.model.js';
+import { Fine } from '../../models/fine.model.js';
+import { Book } from '../../models/book.model.js';
+import { AppError } from '../../shared/errors.js';
+import { generatePDF } from '../../shared/pdf.js';
 
 function parseDateParam(value: unknown, label: string): Date | undefined {
   if (!value) return undefined;

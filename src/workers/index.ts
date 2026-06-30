@@ -1,8 +1,8 @@
-import { connectRedis } from "../utils/redis";
-import { createNotificationWorker } from "./notification.worker";
-import { createOverdueWorker, scheduleOverdueCheck } from "./overdue.worker";
-import { createReservationWorker } from "./reservation.worker";
-import { logger } from "../config";
+import { connectRedis } from '../utils/redis.js';
+import { createNotificationWorker } from './notification.worker.js';
+import { createOverdueWorker, scheduleOverdueCheck } from './overdue.worker.js';
+import { createReservationWorker } from './reservation.worker.js';
+import { logger } from '../config/index.js';
 
 let notificationWorker: ReturnType<typeof createNotificationWorker> | null = null;
 let overdueWorker: ReturnType<typeof createOverdueWorker> | null = null;

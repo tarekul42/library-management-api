@@ -1,5 +1,5 @@
 import mongoose from "mongoose";
-import { logger } from "../config";
+import { logger } from '../config/index.js';
 
 let isConnected = false;
 let connecting: Promise<void> | null = null;

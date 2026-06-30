@@ -1,6 +1,6 @@
 import type { Context } from "hono";
-import { AppError } from "../../shared/errors";
-import * as uploadService from "./uploads.service";
+import { AppError } from '../../shared/errors.js';
+import * as uploadService from './uploads.service.js';
 
 export async function upload(c: Context) {
   const body = await c.req.parseBody();

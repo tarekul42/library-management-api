@@ -1,5 +1,5 @@
 import type { Context } from "hono";
-import * as reportService from "./reports.service";
+import * as reportService from './reports.service.js';
 
 export async function borrowReport(c: Context) {
   const result = await reportService.generateBorrowReport(c.req.query());

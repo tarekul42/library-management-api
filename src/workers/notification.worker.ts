@@ -1,8 +1,8 @@
 import { Worker } from "bullmq";
 import type { ConnectionOptions } from "bullmq";
-import { getRedis } from "../utils/redis";
-import { Notification } from "../models/notification.model";
-import { logger } from "../config";
+import { getRedis } from '../utils/redis.js';
+import { Notification } from '../models/notification.model.js';
+import { logger } from '../config/index.js';
 
 interface NotificationJob {
   userId: string;

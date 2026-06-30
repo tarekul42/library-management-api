@@ -1,6 +1,6 @@
-import { Review } from "../../models/review.model";
-import { Book } from "../../models/book.model";
-import { AppError } from "../../shared/errors";
+import { Review } from '../../models/review.model.js';
+import { Book } from '../../models/book.model.js';
+import { AppError } from '../../shared/errors.js';
 
 export async function getBookReviews(bookId: string) {
   return Review.find({ book: bookId })

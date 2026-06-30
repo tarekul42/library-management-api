@@ -1,7 +1,7 @@
-import { Book } from "../../models/book.model";
-import { User } from "../../models/user.model";
-import { Borrow } from "../../models/borrow.model";
-import { Fine } from "../../models/fine.model";
+import { Book } from '../../models/book.model.js';
+import { User } from '../../models/user.model.js';
+import { Borrow } from '../../models/borrow.model.js';
+import { Fine } from '../../models/fine.model.js';
 
 export async function getStats() {
   const [totalBooks, totalUsers, activeBorrows, overdueBorrows, totalFines] = await Promise.all([

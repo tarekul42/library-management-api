@@ -1,6 +1,6 @@
-import { Fine } from "../../models/fine.model";
-import { User } from "../../models/user.model";
-import { AppError, NotFoundError } from "../../shared/errors";
+import { Fine } from '../../models/fine.model.js';
+import { User } from '../../models/user.model.js';
+import { AppError, NotFoundError } from '../../shared/errors.js';
 
 export async function getMyFines(userId: string) {
   return Fine.find({ user: userId }).populate({

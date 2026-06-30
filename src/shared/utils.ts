@@ -1,5 +1,5 @@
 import mongoose, { type Model, type Document } from "mongoose";
-import { AppError, NotFoundError } from "./errors";
+import { AppError, NotFoundError } from './errors.js';
 
 export function validateObjectId(id: string, label: string = "ID"): void {
   if (!mongoose.Types.ObjectId.isValid(id)) {

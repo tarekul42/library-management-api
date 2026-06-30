@@ -1,11 +1,11 @@
-import { Borrow } from "../../models/borrow.model";
-import { Book } from "../../models/book.model";
-import { Fine } from "../../models/fine.model";
-import { User } from "../../models/user.model";
-import { AppError, NotFoundError } from "../../shared/errors";
-import { MAX_BORROW_BOOKS, MAX_BORROW_DAYS } from "../../shared/constants";
-import { calculateOverdueDays, calculateFineAmount } from "../../shared/overdue";
-import { notificationQueue, reservationQueue } from "../../workers/queues";
+import { Borrow } from '../../models/borrow.model.js';
+import { Book } from '../../models/book.model.js';
+import { Fine } from '../../models/fine.model.js';
+import { User } from '../../models/user.model.js';
+import { AppError, NotFoundError } from '../../shared/errors.js';
+import { MAX_BORROW_BOOKS, MAX_BORROW_DAYS } from '../../shared/constants.js';
+import { calculateOverdueDays, calculateFineAmount } from '../../shared/overdue.js';
+import { notificationQueue, reservationQueue } from '../../workers/queues.js';
 
 export async function createBorrow(userId: string, input: { book: string; dueDate: Date; quantity: number }) {
   const now = new Date();

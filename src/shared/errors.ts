@@ -1,5 +1,5 @@
 import type { Context } from "hono";
-import { logger } from "../config";
+import { logger } from '../config/index.js';
 
 export class AppError extends Error {
   public statusCode: number;

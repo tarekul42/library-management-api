@@ -1,7 +1,7 @@
 import type { Context, Next } from "hono";
 import jwt from "jsonwebtoken";
-import { UnauthorizedError, ForbiddenError } from "../shared/errors";
-import type { Env } from "../config/env";
+import { UnauthorizedError, ForbiddenError } from '../shared/errors.js';
+import type { Env } from '../config/env.js';
 
 interface JwtPayload {
   userId: string;

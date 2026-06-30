@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { GENRES, getMaxPublishedYear } from "../shared/constants";
+import { GENRES, getMaxPublishedYear } from '../shared/constants.js';
 
 const genreSchema = z.enum(GENRES);
 

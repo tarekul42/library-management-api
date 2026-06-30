@@ -1,4 +1,4 @@
-import { FINE_RATE_PER_DAY } from "./constants";
+import { FINE_RATE_PER_DAY } from './constants.js';
 
 export function calculateOverdueDays(dueDate: Date, fromDate: Date = new Date()): number {
   return Math.ceil((fromDate.getTime() - dueDate.getTime()) / (1000 * 60 * 60 * 24));

@@ -1,6 +1,6 @@
 import { Hono } from "hono";
-import * as bookController from "./books.controller";
-import { authenticate, authorize } from "../../middleware";
+import * as bookController from './books.controller.js';
+import { authenticate, authorize } from '../../middleware/index.js';
 
 const bookRoutes = new Hono();
 

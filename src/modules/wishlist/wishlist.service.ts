@@ -1,5 +1,5 @@
-import { Wishlist } from "../../models/wishlist.model";
-import { AppError } from "../../shared/errors";
+import { Wishlist } from '../../models/wishlist.model.js';
+import { AppError } from '../../shared/errors.js';
 
 export async function getMyWishlist(userId: string) {
   const items = await Wishlist.find({ user: userId }).populate("book");

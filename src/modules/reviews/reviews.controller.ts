@@ -1,7 +1,7 @@
 import type { Context } from "hono";
 import { z } from "zod";
-import { ValidationError } from "../../shared/errors";
-import * as reviewsService from "./reviews.service";
+import { ValidationError } from '../../shared/errors.js';
+import * as reviewsService from './reviews.service.js';
 
 const createReviewSchema = z.object({
   book: z.string().min(1),

@@ -1,10 +1,10 @@
 import { serve, type ServerType } from "@hono/node-server";
 import { v2 as cloudinary } from "cloudinary";
-import app from "./app";
-import { getEnv, logger } from "./config";
-import { connectDatabase, disconnectDatabase } from "./utils/connection";
-import { disconnectRedis } from "./utils/redis";
-import { startWorkers, stopWorkers } from "./workers";
+import app from './app.js';
+import { getEnv, logger } from './config/index.js';
+import { connectDatabase, disconnectDatabase } from './utils/connection.js';
+import { disconnectRedis } from './utils/redis.js';
+import { startWorkers, stopWorkers } from './workers/index.js';
 
 let server: ServerType | null = null;
 
@@ -46,6 +46,6 @@ process.on("SIGTERM", shutdown);
 process.on("SIGINT", shutdown);
 
 main().catch((err) => {
-  logger.error("Failed to start server:", err);
+  logger.error({ err }, "Failed to start server");
   process.exit(1);
 });

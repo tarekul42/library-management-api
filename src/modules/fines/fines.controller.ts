@@ -1,5 +1,5 @@
 import type { Context } from "hono";
-import * as finesService from "./fines.service";
+import * as finesService from './fines.service.js';
 
 export async function getMyFines(c: Context) {
   const userId = c.get("userId");

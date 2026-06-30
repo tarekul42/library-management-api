@@ -1,6 +1,6 @@
 import { Hono } from "hono";
-import { authenticate } from "../../middleware";
-import * as wishlistController from "./wishlist.controller";
+import { authenticate } from '../../middleware/index.js';
+import * as wishlistController from './wishlist.controller.js';
 
 const wishlistRoutes = new Hono();
 

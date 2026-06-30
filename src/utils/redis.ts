@@ -1,5 +1,5 @@
 import { Redis } from "ioredis";
-import { getEnv } from "../config";
+import { getEnv } from '../config/index.js';
 
 let client: Redis | null = null;
 let connecting: Promise<void> | null = null;
@@ -18,8 +18,14 @@ export function getRedis(): Redis {
 export async function connectRedis(): Promise<void> {
   if (connecting) return connecting;
   const redis = getRedis();
-  if (redis.status === "ready" || redis.status === "connecting") return;
-  connecting = redis.connect();
+  if (redis.status === "ready") return;
+  if (redis.status === "connecting" || redis.status === "connect") {
+    connecting = new Promise<void>((resolve) => {
+      redis.once("ready", resolve);
+    });
+  } else {
+    connecting = redis.connect();
+  }
   try {
     await connecting;
   } finally {

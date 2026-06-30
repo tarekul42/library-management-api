@@ -1,7 +1,7 @@
-import { Author } from "../../models/author.model";
-import { Book } from "../../models/book.model";
-import { AppError, NotFoundError } from "../../shared/errors";
-import { findByIdOrThrow } from "../../shared/utils";
+import { Author } from '../../models/author.model.js';
+import { Book } from '../../models/book.model.js';
+import { AppError, NotFoundError } from '../../shared/errors.js';
+import { findByIdOrThrow } from '../../shared/utils.js';
 
 export async function getAll(page: number, limit: number) {
   const skip = (page - 1) * limit;

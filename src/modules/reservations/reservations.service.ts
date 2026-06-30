@@ -1,6 +1,6 @@
-import { Reservation } from "../../models/reservation.model";
-import { Book } from "../../models/book.model";
-import { AppError, NotFoundError } from "../../shared/errors";
+import { Reservation } from '../../models/reservation.model.js';
+import { Book } from '../../models/book.model.js';
+import { AppError, NotFoundError } from '../../shared/errors.js';
 
 export async function getMyReservations(userId: string) {
   return Reservation.find({ user: userId })

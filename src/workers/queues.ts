@@ -1,6 +1,6 @@
 import { Queue } from "bullmq";
 import type { ConnectionOptions } from "bullmq";
-import { getRedis } from "../utils/redis";
+import { getRedis } from '../utils/redis.js';
 
 const conn = getRedis() as unknown as ConnectionOptions;
 const defaultJobOptions = { attempts: 3, backoff: { type: "exponential" as const, delay: 2000 } };

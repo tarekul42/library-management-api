@@ -1,7 +1,7 @@
-import { Book } from "../../models/book.model";
-import type { CreateBookInput, UpdateBookInput, BookQuery } from "../../schemas/book.schema";
-import { AppError, NotFoundError } from "../../shared/errors";
-import { PAGINATION } from "../../shared/constants";
+import { Book } from '../../models/book.model.js';
+import type { CreateBookInput, UpdateBookInput, BookQuery } from '../../schemas/book.schema.js';
+import { AppError, NotFoundError } from '../../shared/errors.js';
+import { PAGINATION } from '../../shared/constants.js';
 
 export async function createBook(input: CreateBookInput) {
   const book = await Book.create({

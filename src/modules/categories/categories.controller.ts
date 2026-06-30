@@ -1,7 +1,7 @@
 import type { Context } from "hono";
 import { z } from "zod";
-import { ValidationError } from "../../shared/errors";
-import * as categoryService from "./categories.service";
+import { ValidationError } from '../../shared/errors.js';
+import * as categoryService from './categories.service.js';
 
 const categorySchema = z.object({
   name: z.string().min(1).max(100),

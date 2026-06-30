@@ -1,6 +1,6 @@
 import type { Context } from "hono";
-import { registerSchema, loginSchema, forgotPasswordSchema, resetPasswordSchema, refreshTokenSchema } from "../../schemas/auth.schema";
-import * as authService from "./auth.service";
+import { registerSchema, loginSchema, forgotPasswordSchema, resetPasswordSchema, refreshTokenSchema } from '../../schemas/auth.schema.js';
+import * as authService from './auth.service.js';
 
 export async function register(c: Context) {
   const body = await c.req.json();

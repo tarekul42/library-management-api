@@ -1,5 +1,5 @@
 import type { Context } from "hono";
-import * as dashboardService from "./dashboard.service";
+import * as dashboardService from './dashboard.service.js';
 
 export async function getStats(c: Context) {
   const data = await dashboardService.getStats();

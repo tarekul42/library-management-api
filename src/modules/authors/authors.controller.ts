@@ -1,6 +1,6 @@
 import type { Context } from "hono";
-import { createAuthorSchema, updateAuthorSchema } from "../../schemas/author.schema";
-import * as authorService from "./authors.service";
+import { createAuthorSchema, updateAuthorSchema } from '../../schemas/author.schema.js';
+import * as authorService from './authors.service.js';
 
 export async function getAll(c: Context) {
   const page = Math.max(1, parseInt(c.req.query("page") ?? "1", 10));

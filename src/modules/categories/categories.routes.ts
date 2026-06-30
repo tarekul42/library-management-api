@@ -1,6 +1,6 @@
 import { Hono } from "hono";
-import { authenticate, authorize } from "../../middleware";
-import * as categoryController from "./categories.controller";
+import { authenticate, authorize } from '../../middleware/index.js';
+import * as categoryController from './categories.controller.js';
 
 const categoryRoutes = new Hono();
 

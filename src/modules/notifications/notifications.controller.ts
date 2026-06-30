@@ -1,5 +1,5 @@
 import type { Context } from "hono";
-import * as notificationService from "./notifications.service";
+import * as notificationService from './notifications.service.js';
 
 export async function getMyNotifications(c: Context) {
   const userId = c.get("userId");

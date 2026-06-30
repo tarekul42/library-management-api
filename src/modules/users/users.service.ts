@@ -1,7 +1,7 @@
-import { User } from "../../models/user.model";
-import { Borrow } from "../../models/borrow.model";
-import { NotFoundError } from "../../shared/errors";
-import { findByIdOrThrow } from "../../shared/utils";
+import { User } from '../../models/user.model.js';
+import { Borrow } from '../../models/borrow.model.js';
+import { NotFoundError } from '../../shared/errors.js';
+import { findByIdOrThrow } from '../../shared/utils.js';
 
 export async function getMe(userId: string) {
   const user = await findByIdOrThrow(User, userId, "User not found");

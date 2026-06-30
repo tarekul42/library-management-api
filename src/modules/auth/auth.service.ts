@@ -1,11 +1,11 @@
 import bcrypt from "bcryptjs";
 import jwt, { type SignOptions } from "jsonwebtoken";
 import crypto from "node:crypto";
-import { User, type IUserDocument } from "../../models/user.model";
-import { getEnv, type Env } from "../../config";
-import { AppError } from "../../shared/errors";
-import type { RegisterInput, LoginInput } from "../../schemas/auth.schema";
-import { getRedis } from "../../utils/redis";
+import { User, type IUserDocument } from '../../models/user.model.js';
+import { getEnv, type Env } from '../../config/index.js';
+import { AppError } from '../../shared/errors.js';
+import type { RegisterInput, LoginInput } from '../../schemas/auth.schema.js';
+import { getRedis } from '../../utils/redis.js';
 
 function blacklistKey(token: string): string {
   return `token_blacklist:${token}`;

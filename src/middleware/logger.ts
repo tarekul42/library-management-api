@@ -1,5 +1,5 @@
 import type { Context, Next } from "hono";
-import { logger } from "../config";
+import { logger } from '../config/index.js';
 
 export async function requestLogger(c: Context, next: Next) {
   const start = Date.now();

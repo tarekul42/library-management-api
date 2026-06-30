@@ -1,6 +1,6 @@
-import { Category } from "../../models/category.model";
-import { AppError, NotFoundError } from "../../shared/errors";
-import { generateSlug } from "../../shared/slug";
+import { Category } from '../../models/category.model.js';
+import { AppError, NotFoundError } from '../../shared/errors.js';
+import { generateSlug } from '../../shared/slug.js';
 
 export async function getAll() {
   return Category.find().sort({ name: 1 });

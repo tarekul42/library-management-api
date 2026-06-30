@@ -1,6 +1,6 @@
 import { Hono } from "hono";
-import { authenticate, authorize } from "../../middleware";
-import * as reservationController from "./reservations.controller";
+import { authenticate, authorize } from '../../middleware/index.js';
+import * as reservationController from './reservations.controller.js';
 
 const reservationRoutes = new Hono();
 

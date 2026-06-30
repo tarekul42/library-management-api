@@ -1,7 +1,7 @@
 import type { Context } from "hono";
-import { updateProfileSchema, updateUserSchema } from "../../schemas/user.schema";
-import { ValidationError } from "../../shared/errors";
-import * as userService from "./users.service";
+import { updateProfileSchema, updateUserSchema } from '../../schemas/user.schema.js';
+import { ValidationError } from '../../shared/errors.js';
+import * as userService from './users.service.js';
 
 export async function getMe(c: Context) {
   const userId = c.get("userId");

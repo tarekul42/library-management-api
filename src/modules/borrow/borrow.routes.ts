@@ -1,6 +1,6 @@
 import { Hono } from "hono";
-import { authenticate, authorize } from "../../middleware";
-import * as borrowController from "./borrow.controller";
+import { authenticate, authorize } from '../../middleware/index.js';
+import * as borrowController from './borrow.controller.js';
 
 const borrowRoutes = new Hono();
 

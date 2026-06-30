@@ -1,12 +1,12 @@
 import { Worker } from "bullmq";
 import type { ConnectionOptions } from "bullmq";
-import { getRedis } from "../utils/redis";
-import { Borrow } from "../models/borrow.model";
-import { Fine } from "../models/fine.model";
-import { User } from "../models/user.model";
-import { notificationQueue, overdueQueue } from "./queues";
-import { logger } from "../config";
-import { calculateOverdueDays, calculateFineAmount } from "../shared/overdue";
+import { getRedis } from '../utils/redis.js';
+import { Borrow } from '../models/borrow.model.js';
+import { Fine } from '../models/fine.model.js';
+import { User } from '../models/user.model.js';
+import { notificationQueue, overdueQueue } from './queues.js';
+import { logger } from '../config/index.js';
+import { calculateOverdueDays, calculateFineAmount } from '../shared/overdue.js';
 
 const conn = getRedis() as unknown as ConnectionOptions;
 

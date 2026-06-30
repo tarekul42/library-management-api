@@ -1,22 +1,29 @@
 import { Hono } from "hono";
-import { corsMiddleware, requestLogger } from "./middleware";
-import { errorHandler, notFoundHandler } from "./shared/errors";
-import { loadEnv, type Env } from "./config";
+import {
+  corsMiddleware,
+  requestLogger,
+  compressionMiddleware,
+  securityHeadersMiddleware,
+  apiRateLimiter,
+  authRateLimiter,
+} from './middleware/index.js';
+import { errorHandler, notFoundHandler } from './shared/errors.js';
+import { loadEnv, type Env } from './config/index.js';
 
-import authRoutes from "./modules/auth/auth.routes";
-import userRoutes from "./modules/users/users.routes";
-import bookRoutes from "./modules/books/books.routes";
-import borrowRoutes from "./modules/borrow/borrow.routes";
-import authorRoutes from "./modules/authors/authors.routes";
-import categoryRoutes from "./modules/categories/categories.routes";
-import fineRoutes from "./modules/fines/fines.routes";
-import reviewRoutes from "./modules/reviews/reviews.routes";
-import notificationRoutes from "./modules/notifications/notifications.routes";
-import dashboardRoutes from "./modules/dashboard/dashboard.routes";
-import uploadRoutes from "./modules/uploads/uploads.routes";
-import wishlistRoutes from "./modules/wishlist/wishlist.routes";
-import reservationRoutes from "./modules/reservations/reservations.routes";
-import reportRoutes from "./modules/reports/reports.routes";
+import authRoutes from './modules/auth/auth.routes.js';
+import userRoutes from './modules/users/users.routes.js';
+import bookRoutes from './modules/books/books.routes.js';
+import borrowRoutes from './modules/borrow/borrow.routes.js';
+import authorRoutes from './modules/authors/authors.routes.js';
+import categoryRoutes from './modules/categories/categories.routes.js';
+import fineRoutes from './modules/fines/fines.routes.js';
+import reviewRoutes from './modules/reviews/reviews.routes.js';
+import notificationRoutes from './modules/notifications/notifications.routes.js';
+import dashboardRoutes from './modules/dashboard/dashboard.routes.js';
+import uploadRoutes from './modules/uploads/uploads.routes.js';
+import wishlistRoutes from './modules/wishlist/wishlist.routes.js';
+import reservationRoutes from './modules/reservations/reservations.routes.js';
+import reportRoutes from './modules/reports/reports.routes.js';
 
 const app = new Hono<{ Variables: { userId: string; userRole: string; env: Env } }>();
 
@@ -27,6 +34,10 @@ app.use("*", (c, next) => {
 });
 
 app.use("*", corsMiddleware);
+app.use("*", securityHeadersMiddleware);
+app.use("*", compressionMiddleware);
+app.use("*", apiRateLimiter);
+app.use("*", authRateLimiter);
 app.use("*", requestLogger);
 
 app.get("/", (c) =>

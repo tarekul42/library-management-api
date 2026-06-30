@@ -1,5 +1,5 @@
-import { Notification } from "../../models/notification.model";
-import { NotFoundError } from "../../shared/errors";
+import { Notification } from '../../models/notification.model.js';
+import { NotFoundError } from '../../shared/errors.js';
 
 export async function getMyNotifications(userId: string) {
   return Notification.find({ user: userId })

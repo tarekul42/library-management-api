@@ -1,5 +1,5 @@
 import type { Context, Next } from "hono";
-import type { Env } from "../config/env";
+import type { Env } from '../config/env.js';
 
 function matchOrigin(requestOrigin: string | undefined, allowedOrigins: string[]): string | null {
   if (!requestOrigin) return null;

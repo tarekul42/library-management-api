@@ -1,6 +1,6 @@
 import { Hono } from "hono";
-import { authenticate, authorize } from "../../middleware";
-import * as finesController from "./fines.controller";
+import { authenticate, authorize } from '../../middleware/index.js';
+import * as finesController from './fines.controller.js';
 
 const fineRoutes = new Hono();
 

@@ -1,5 +1,5 @@
 import mongoose, { Schema, Document } from "mongoose";
-import { GENRES, getMaxPublishedYear } from "../shared/constants";
+import { GENRES, getMaxPublishedYear } from '../shared/constants.js';
 
 export interface IBookDocument extends Document {
   title: string;

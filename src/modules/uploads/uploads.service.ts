@@ -1,5 +1,5 @@
 import { v2 as cloudinary } from "cloudinary";
-import { AppError } from "../../shared/errors";
+import { AppError } from '../../shared/errors.js';
 
 const ALLOWED_TYPES = new Set(["image/jpeg", "image/png", "image/webp", "image/gif"]);
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB

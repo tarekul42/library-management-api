@@ -1,7 +1,7 @@
 import type { Context } from "hono";
-import { createBorrowSchema, borrowQuerySchema } from "../../schemas/borrow.schema";
-import { ForbiddenError } from "../../shared/errors";
-import * as borrowService from "./borrow.service";
+import { createBorrowSchema, borrowQuerySchema } from '../../schemas/borrow.schema.js';
+import { ForbiddenError } from '../../shared/errors.js';
+import * as borrowService from './borrow.service.js';
 
 export async function create(c: Context) {
   const userId = c.get("userId");

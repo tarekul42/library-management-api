@@ -1,7 +1,7 @@
 import type { Context } from "hono";
-import { createBookSchema, updateBookSchema, bookQuerySchema } from "../../schemas/book.schema";
-import { validateObjectId } from "../../shared/utils";
-import * as bookService from "./books.service";
+import { createBookSchema, updateBookSchema, bookQuerySchema } from '../../schemas/book.schema.js';
+import { validateObjectId } from '../../shared/utils.js';
+import * as bookService from './books.service.js';
 
 export async function createBook(c: Context) {
   const body = await c.req.json();

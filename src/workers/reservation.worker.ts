@@ -1,10 +1,10 @@
 import { Worker } from "bullmq";
 import type { ConnectionOptions } from "bullmq";
-import { getRedis } from "../utils/redis";
-import { Reservation } from "../models/reservation.model";
-import { Book } from "../models/book.model";
-import { notificationQueue } from "./queues";
-import { logger } from "../config";
+import { getRedis } from '../utils/redis.js';
+import { Reservation } from '../models/reservation.model.js';
+import { Book } from '../models/book.model.js';
+import { notificationQueue } from './queues.js';
+import { logger } from '../config/index.js';
 
 interface ReservationJob {
   bookId: string;

@@ -1,7 +1,7 @@
 import type { Context } from "hono";
 import { z } from "zod";
-import { ValidationError } from "../../shared/errors";
-import * as wishlistService from "./wishlist.service";
+import { ValidationError } from '../../shared/errors.js';
+import * as wishlistService from './wishlist.service.js';
 
 const createWishlistSchema = z.object({
   book: z.string().min(1),

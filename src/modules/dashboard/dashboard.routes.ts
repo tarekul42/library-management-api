@@ -1,6 +1,6 @@
 import { Hono } from "hono";
-import { authenticate, authorize } from "../../middleware";
-import * as dashboardController from "./dashboard.controller";
+import { authenticate, authorize } from '../../middleware/index.js';
+import * as dashboardController from './dashboard.controller.js';
 
 const dashboardRoutes = new Hono();
 

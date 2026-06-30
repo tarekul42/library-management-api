@@ -1,6 +1,6 @@
 import { Hono } from "hono";
-import { authenticate, authorize } from "../../middleware";
-import * as userController from "./users.controller";
+import { authenticate, authorize } from '../../middleware/index.js';
+import * as userController from './users.controller.js';
 
 const userRoutes = new Hono();
 
