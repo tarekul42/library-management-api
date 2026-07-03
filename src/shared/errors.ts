@@ -1,5 +1,5 @@
 import type { Context } from "hono";
-import { logger } from '../config/index.js';
+import { getLogger } from '../config/index.js';
 
 export class AppError extends Error {
   public statusCode: number;
@@ -58,7 +58,7 @@ export async function errorHandler(err: Error, c: Context) {
     );
   }
 
-  logger.error({ err }, "Unhandled error");
+  getLogger().error({ err }, "Unhandled error");
   return c.json(
     {
       success: false,

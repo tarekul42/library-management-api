@@ -19,9 +19,13 @@ let _notificationQueue: Queue<NotificationData> | null = null;
 let _overdueQueue: Queue | null = null;
 let _reservationQueue: Queue<ReservationData> | null = null;
 
+export function getConnection(): ConnectionOptions {
+  const redis = getRedis();
+  return redis as unknown as ConnectionOptions;
+}
+
 function createQueue<T>(name: string): Queue<T> {
-  const conn = getRedis() as unknown as ConnectionOptions;
-  return new Queue<T>(name, { connection: conn, defaultJobOptions });
+  return new Queue<T>(name, { connection: getConnection(), defaultJobOptions });
 }
 
 export async function initQueues(): Promise<void> {

@@ -1,5 +1,5 @@
 import mongoose from "mongoose";
-import { logger } from '../config/index.js';
+import { getLogger } from '../config/index.js';
 
 let isConnected = false;
 let connecting: Promise<void> | null = null;
@@ -10,10 +10,10 @@ export async function connectDatabase(uri: string): Promise<void> {
 
   connecting = mongoose.connect(uri).then(() => {
     isConnected = true;
-    logger.info("Database connected successfully");
+    getLogger().info("Database connected successfully");
   }).catch((error) => {
     isConnected = false;
-    logger.error({ err: error }, "Database connection failed");
+    getLogger().error({ err: error }, "Database connection failed");
     throw error;
   }).finally(() => {
     connecting = null;
@@ -21,7 +21,7 @@ export async function connectDatabase(uri: string): Promise<void> {
   await connecting;
 
   mongoose.connection.on("error", (err) => {
-    logger.error({ err }, "MongoDB connection error");
+    getLogger().error({ err }, "MongoDB connection error");
   });
 
   mongoose.connection.on("disconnected", () => {

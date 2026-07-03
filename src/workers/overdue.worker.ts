@@ -5,12 +5,11 @@ import { Borrow } from '../models/borrow.model.js';
 import { Fine } from '../models/fine.model.js';
 import { User } from '../models/user.model.js';
 import { getNotificationQueue, getOverdueQueue } from './queues.js';
-import { logger } from '../config/index.js';
+import { getLogger } from '../config/index.js';
 import { calculateOverdueDays, calculateFineAmount } from '../shared/overdue.js';
 
-const conn = getRedis() as unknown as ConnectionOptions;
-
 export function createOverdueWorker(): Worker {
+  const conn = getRedis() as unknown as ConnectionOptions;
   const worker = new Worker(
     "overdue",
     async () => {
@@ -53,26 +52,26 @@ export function createOverdueWorker(): Worker {
         } catch (err: unknown) {
           const code = (err as { code?: number })?.code;
           if (code === 11000) {
-            logger.warn({ borrowId: borrow._id }, "Fine already exists for overdue borrow — marking as overdue without duplicate fine");
+            getLogger().warn({ borrowId: borrow._id }, "Fine already exists for overdue borrow — marking as overdue without duplicate fine");
           } else {
-            logger.error({ err, borrowId: borrow._id }, "Failed to process overdue borrow");
+            getLogger().error({ err, borrowId: borrow._id }, "Failed to process overdue borrow");
           }
         }
       }
 
       if (processedCount > 0) {
-        logger.info(`Processed ${processedCount} overdue borrow(s)`);
+        getLogger().info(`Processed ${processedCount} overdue borrow(s)`);
       }
     },
     { connection: conn },
   );
 
   worker.on("completed", (job) => {
-    logger.info(`Overdue check job ${job.id} completed`);
+    getLogger().info(`Overdue check job ${job.id} completed`);
   });
 
   worker.on("failed", (job, err) => {
-    logger.error({ err }, `Overdue check job ${job?.id} failed`);
+    getLogger().error({ err }, `Overdue check job ${job?.id} failed`);
   });
 
   return worker;

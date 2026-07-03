@@ -26,7 +26,7 @@ const borrowSchema = new Schema<IBorrowDocument>(
       enum: ["active", "returned", "overdue"],
       default: "active",
     },
-    fine: { type: Schema.Types.ObjectId, ref: "Fine" },
+    fine: { type: Schema.Types.ObjectId, ref: "Fine", index: true },
   },
   { timestamps: true, versionKey: false },
 );
@@ -34,5 +34,6 @@ const borrowSchema = new Schema<IBorrowDocument>(
 borrowSchema.index({ user: 1, status: 1 });
 borrowSchema.index({ book: 1, status: 1 });
 borrowSchema.index({ dueDate: 1, status: 1 });
+borrowSchema.index({ borrowedAt: 1 });
 
 export const Borrow = mongoose.model<IBorrowDocument>("Borrow", borrowSchema);

@@ -1,8 +1,9 @@
 import { connectRedis } from '../utils/redis.js';
+import { initQueues } from './queues.js';
 import { createNotificationWorker } from './notification.worker.js';
 import { createOverdueWorker, scheduleOverdueCheck } from './overdue.worker.js';
 import { createReservationWorker } from './reservation.worker.js';
-import { logger } from '../config/index.js';
+import { getLogger } from '../config/index.js';
 
 let notificationWorker: ReturnType<typeof createNotificationWorker> | null = null;
 let overdueWorker: ReturnType<typeof createOverdueWorker> | null = null;
@@ -10,7 +11,9 @@ let reservationWorker: ReturnType<typeof createReservationWorker> | null = null;
 
 export async function startWorkers(): Promise<void> {
   await connectRedis();
-  logger.info("Redis connected, starting BullMQ workers...");
+  getLogger().info("Redis connected, initializing queues...");
+  await initQueues();
+  getLogger().info("Queues initialized, starting BullMQ workers...");
 
   notificationWorker = createNotificationWorker();
   overdueWorker = createOverdueWorker();
@@ -18,7 +21,7 @@ export async function startWorkers(): Promise<void> {
 
   await scheduleOverdueCheck();
 
-  logger.info("All workers started");
+  getLogger().info("All workers started");
 }
 
 export async function stopWorkers(): Promise<void> {
@@ -27,5 +30,5 @@ export async function stopWorkers(): Promise<void> {
     overdueWorker?.close(),
     reservationWorker?.close(),
   ]);
-  logger.info("All workers stopped");
+  getLogger().info("All workers stopped");
 }

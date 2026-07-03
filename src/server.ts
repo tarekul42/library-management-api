@@ -1,7 +1,7 @@
 import { serve, type ServerType } from "@hono/node-server";
 import { v2 as cloudinary } from "cloudinary";
 import app from './app.js';
-import { getEnv, logger } from './config/index.js';
+import { getEnv, getLogger } from './config/index.js';
 import { connectDatabase, disconnectDatabase } from './utils/connection.js';
 import { disconnectRedis } from './utils/redis.js';
 import { startWorkers, stopWorkers } from './workers/index.js';
@@ -17,7 +17,7 @@ async function main() {
       api_key: env.CLOUDINARY_API_KEY,
       api_secret: env.CLOUDINARY_API_SECRET,
     });
-    logger.info("Cloudinary configured");
+    getLogger().info("Cloudinary configured");
   }
 
   await connectDatabase(env.DATABASE_URL);
@@ -26,13 +26,13 @@ async function main() {
   server = serve(
     { fetch: app.fetch, port: env.PORT },
     (info) => {
-      logger.info(`API server running on http://localhost:${info.port}`);
+      getLogger().info(`API server running on http://localhost:${info.port}`);
     },
   );
 }
 
 async function shutdown() {
-  logger.info("Shutting down gracefully...");
+  getLogger().info("Shutting down gracefully...");
   if (server) {
     server.close();
   }
@@ -46,16 +46,16 @@ process.on("SIGTERM", shutdown);
 process.on("SIGINT", shutdown);
 
 process.on("uncaughtException", (err) => {
-  logger.error({ err }, "Uncaught exception — shutting down");
+  getLogger().error({ err }, "Uncaught exception — shutting down");
   shutdown();
 });
 
 process.on("unhandledRejection", (reason) => {
-  logger.error({ err: reason }, "Unhandled rejection — shutting down");
+  getLogger().error({ err: reason }, "Unhandled rejection — shutting down");
   shutdown();
 });
 
 main().catch((err) => {
-  logger.error({ err }, "Failed to start server");
+  getLogger().error({ err }, "Failed to start server");
   process.exit(1);
 });

@@ -1,6 +1,6 @@
 import { Book } from '../../models/book.model.js';
 import type { CreateBookInput, UpdateBookInput, BookQuery } from '../../schemas/book.schema.js';
-import { AppError, NotFoundError } from '../../shared/errors.js';
+import { NotFoundError } from '../../shared/errors.js';
 import { paginate } from '../../shared/pagination.js';
 
 export async function createBook(input: CreateBookInput) {
@@ -38,18 +38,13 @@ export async function getBookById(id: string) {
 }
 
 export async function updateBook(id: string, input: UpdateBookInput) {
-  const book = await Book.findById(id);
-  if (!book) throw new NotFoundError("Book not found");
-
   if (input.copies !== undefined) {
-    const borrowedCount = book.copies - book.availableCopies;
-    const newAvailableCopies = Math.max(0, input.copies - borrowedCount);
-    const updated = await Book.findOneAndUpdate(
-      { _id: id, copies: book.copies },
-      { $set: { ...input, copies: input.copies, availableCopies: newAvailableCopies, available: newAvailableCopies > 0 } },
+    const updated = await Book.findByIdAndUpdate(
+      id,
+      { $set: { ...input, availableCopies: input.copies, available: input.copies > 0 } },
       { new: true },
     );
-    if (!updated) throw new AppError("Book was modified concurrently, please retry", 409);
+    if (!updated) throw new NotFoundError("Book not found");
     return updated.populate("author");
   }
 

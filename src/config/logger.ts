@@ -1,18 +1,21 @@
 import pino from "pino";
 import { getEnv } from './env.js';
 
-export function createLogger() {
-  const env = getEnv();
-  return pino({
-    level: env.NODE_ENV === "production" ? "info" : "debug",
-    transport:
-      env.NODE_ENV !== "production"
-        ? {
-            target: "pino-pretty",
-            options: { colorize: true },
-          }
-        : undefined,
-  });
-}
+let _logger: ReturnType<typeof pino> | null = null;
 
-export const logger = createLogger();
+export function getLogger() {
+  if (!_logger) {
+    const env = getEnv();
+    _logger = pino({
+      level: env.NODE_ENV === "production" ? "info" : "debug",
+      transport:
+        env.NODE_ENV !== "production"
+          ? {
+              target: "pino-pretty",
+              options: { colorize: true },
+            }
+          : undefined,
+    });
+  }
+  return _logger;
+}

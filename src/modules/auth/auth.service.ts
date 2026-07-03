@@ -2,10 +2,11 @@ import bcrypt from "bcryptjs";
 import jwt, { type SignOptions } from "jsonwebtoken";
 import crypto from "node:crypto";
 import { User, type IUserDocument } from '../../models/user.model.js';
-import { getEnv, logger, type Env } from '../../config/index.js';
+import { getEnv, type Env } from '../../config/index.js';
 import { AppError } from '../../shared/errors.js';
 import type { RegisterInput, LoginInput } from '../../schemas/auth.schema.js';
 import { getRedis } from '../../utils/redis.js';
+import { sendEmail } from '../../utils/email.js';
 
 function blacklistKey(token: string): string {
   return `token_blacklist:${token}`;
@@ -17,8 +18,7 @@ async function isTokenBlacklisted(token: string): Promise<boolean> {
     const exists = await redis.exists(blacklistKey(token));
     return exists === 1;
   } catch {
-    logger.warn("Redis unavailable in isTokenBlacklisted — treating token as valid");
-    return false;
+    throw new AppError("Authentication service unavailable", 503);
   }
 }
 
@@ -27,7 +27,7 @@ async function addToBlacklist(token: string): Promise<void> {
     const redis = getRedis();
     await redis.set(blacklistKey(token), "1", "EX", 7 * 24 * 60 * 60);
   } catch {
-    logger.warn("Redis unavailable in addToBlacklist — token revocation skipped");
+    throw new AppError("Authentication service unavailable", 503);
   }
 }
 
@@ -156,6 +156,13 @@ export async function forgotPassword(email: string) {
   user.resetPasswordToken = tokenHash;
   user.resetPasswordExpires = new Date(Date.now() + 60 * 60 * 1000);
   await user.save();
+
+  const resetUrl = `${getEnv().CORS_ORIGIN}/reset-password/${resetToken}`;
+  await sendEmail(
+    user.email,
+    "Password Reset Request",
+    `<p>You requested a password reset. Click <a href="${resetUrl}">here</a> to reset your password. This link expires in 1 hour.</p>`,
+  );
 }
 
 export async function resetPassword(token: string, password: string) {

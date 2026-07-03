@@ -36,7 +36,7 @@ const userSchema = new Schema<IUserDocument>(
     fineBalance: { type: Number, default: 0, min: 0 },
     borrowedCount: { type: Number, default: 0, min: 0 },
     resetPasswordToken: { type: String, select: false },
-    resetPasswordExpires: { type: Date },
+    resetPasswordExpires: { type: Date, select: false },
   },
   { timestamps: true, versionKey: false },
 );
