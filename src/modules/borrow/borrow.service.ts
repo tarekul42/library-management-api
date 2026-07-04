@@ -3,7 +3,7 @@ import { Book } from '../../models/book.model.js';
 import { Fine } from '../../models/fine.model.js';
 import { User } from '../../models/user.model.js';
 import { AppError, NotFoundError } from '../../shared/errors.js';
-import { MAX_BORROW_BOOKS, MAX_BORROW_DAYS } from '../../shared/constants.js';
+import { MAX_BORROW_BOOKS, MAX_BORROW_DAYS, MAX_RENEWALS } from '../../shared/constants.js';
 import { calculateOverdueDays, calculateFineAmount } from '../../shared/overdue.js';
 import { getNotificationQueue, getReservationQueue } from '../../workers/queues.js';
 import { paginate } from '../../shared/pagination.js';
@@ -101,6 +101,28 @@ export async function returnBorrow(borrowId: string, userId: string, userRole: s
   }
 
   await getReservationQueue().add("fulfill", { bookId: (book?._id ?? borrow.book).toString() });
+
+  return borrow;
+}
+
+export async function renewBorrow(borrowId: string, userId: string, userRole: string) {
+  const borrow = await Borrow.findById(borrowId);
+  if (!borrow) throw new NotFoundError("Borrow record not found");
+  if (borrow.user.toString() !== userId && userRole !== "admin") {
+    throw new AppError("Unauthorized", 403);
+  }
+  if (borrow.status !== "active") {
+    throw new AppError("Only active borrows can be renewed", 400);
+  }
+  if (borrow.renewalCount >= MAX_RENEWALS) {
+    throw new AppError(`Maximum renewals (${MAX_RENEWALS}) reached`, 400);
+  }
+
+  const newDueDate = new Date(borrow.dueDate);
+  newDueDate.setDate(newDueDate.getDate() + MAX_BORROW_DAYS);
+  borrow.dueDate = newDueDate;
+  borrow.renewalCount += 1;
+  await borrow.save();
 
   return borrow;
 }

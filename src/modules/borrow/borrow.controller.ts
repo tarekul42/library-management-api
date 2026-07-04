@@ -42,6 +42,14 @@ export async function getOverdue(c: Context) {
   return c.json({ success: true, message: "Overdue borrows retrieved", data });
 }
 
+export async function renew(c: Context) {
+  const userId = c.get("userId");
+  const userRole = c.get("userRole");
+  const id = c.req.param("id") ?? "";
+  const data = await borrowService.renewBorrow(id, userId, userRole);
+  return c.json({ success: true, message: "Borrow renewed successfully", data });
+}
+
 export async function getById(c: Context) {
   const borrowId = c.req.param("id") ?? "";
   const userId = c.get("userId");

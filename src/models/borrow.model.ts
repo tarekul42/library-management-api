@@ -9,6 +9,7 @@ export interface IBorrowDocument extends Document {
   returnedAt?: Date;
   status: "active" | "returned" | "overdue";
   fine?: mongoose.Types.ObjectId;
+  renewalCount: number;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -27,6 +28,7 @@ const borrowSchema = new Schema<IBorrowDocument>(
       default: "active",
     },
     fine: { type: Schema.Types.ObjectId, ref: "Fine", index: true },
+    renewalCount: { type: Number, default: 0 },
   },
   { timestamps: true, versionKey: false },
 );

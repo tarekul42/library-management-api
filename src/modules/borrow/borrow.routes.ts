@@ -6,6 +6,7 @@ const borrowRoutes = new Hono();
 
 borrowRoutes.post("/", authenticate, borrowController.create);
 borrowRoutes.put("/:id/return", authenticate, borrowController.returnBook);
+borrowRoutes.put("/:id/renew", authenticate, borrowController.renew);
 borrowRoutes.get("/me", authenticate, borrowController.getMyBorrows);
 borrowRoutes.get("/", authenticate, authorize("admin"), borrowController.getAll);
 borrowRoutes.get("/active", authenticate, authorize("admin"), borrowController.getActive);

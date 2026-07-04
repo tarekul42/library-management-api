@@ -24,3 +24,4 @@ export const PAGINATION = {
 export const FINE_RATE_PER_DAY = 5;
 export const MAX_BORROW_DAYS = 14;
 export const MAX_BORROW_BOOKS = 5;
+export const MAX_RENEWALS = 3;

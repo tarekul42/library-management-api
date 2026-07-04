@@ -165,6 +165,22 @@ export async function forgotPassword(email: string) {
   );
 }
 
+export async function changePassword(userId: string, currentPassword: string, newPassword: string) {
+  const user = await User.findById(userId).select("+password");
+  if (!user) {
+    throw new AppError("User not found", 404);
+  }
+
+  const isMatch = await bcrypt.compare(currentPassword, user.password);
+  if (!isMatch) {
+    throw new AppError("Current password is incorrect", 400);
+  }
+
+  const hashedPassword = await bcrypt.hash(newPassword, 12);
+  user.password = hashedPassword;
+  await user.save();
+}
+
 export async function resetPassword(token: string, password: string) {
   const tokenHash = hashToken(token);
   const user = await User.findOne({

@@ -59,6 +59,13 @@ export async function logout(c: Context) {
   return c.json({ success: true, message: "Logged out successfully" });
 }
 
+export async function changePassword(c: Context) {
+  const userId = c.get("userId");
+  const { currentPassword, newPassword } = await c.req.json();
+  await authService.changePassword(userId, currentPassword, newPassword);
+  return c.json({ success: true, message: "Password changed successfully" });
+}
+
 export async function forgotPassword(c: Context) {
   const body = await c.req.json();
   const input = forgotPasswordSchema.parse(body);
