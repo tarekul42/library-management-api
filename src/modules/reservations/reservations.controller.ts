@@ -7,10 +7,16 @@ const createReservationSchema = z.object({
   book: z.string().min(1),
 });
 
+const reservationQuerySchema = z.object({
+  page: z.coerce.number().int().positive().default(1),
+  limit: z.coerce.number().int().positive().max(100).default(20),
+});
+
 export async function getMyReservations(c: Context) {
   const userId = c.get("userId");
-  const data = await reservationService.getMyReservations(userId);
-  return c.json({ success: true, message: "Reservations retrieved", data });
+  const query = reservationQuerySchema.parse(c.req.query());
+  const result = await reservationService.getMyReservations(userId, query);
+  return c.json({ success: true, message: "Reservations retrieved", ...result });
 }
 
 export async function create(c: Context) {

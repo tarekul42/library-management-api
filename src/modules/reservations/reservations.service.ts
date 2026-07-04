@@ -1,11 +1,16 @@
-import { Reservation } from '../../models/reservation.model.js';
+import { Reservation, type IReservationDocument } from '../../models/reservation.model.js';
 import { Book } from '../../models/book.model.js';
 import { AppError, NotFoundError } from '../../shared/errors.js';
+import { paginate } from '../../shared/pagination.js';
+import type { PaginationQuery, IPaginatedResult } from '../../shared/types.js';
 
-export async function getMyReservations(userId: string) {
-  return Reservation.find({ user: userId })
-    .populate("book", "title author isbn coverImage")
-    .sort({ createdAt: -1 });
+export async function getMyReservations(userId: string, query: PaginationQuery = {}): Promise<IPaginatedResult<IReservationDocument>> {
+  return paginate(
+    Reservation,
+    { user: userId },
+    { page: query.page, limit: query.limit, sort: { createdAt: -1 } },
+    { path: "book", select: "title author isbn coverImage" },
+  ) as Promise<IPaginatedResult<IReservationDocument>>;
 }
 
 export async function createReservation(userId: string, bookId: string) {

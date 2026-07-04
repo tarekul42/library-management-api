@@ -1,10 +1,14 @@
-import { Notification } from '../../models/notification.model.js';
+import { Notification, type INotificationDocument } from '../../models/notification.model.js';
 import { NotFoundError } from '../../shared/errors.js';
+import { paginate } from '../../shared/pagination.js';
+import type { PaginationQuery, IPaginatedResult } from '../../shared/types.js';
 
-export async function getMyNotifications(userId: string) {
-  return Notification.find({ user: userId })
-    .sort({ createdAt: -1 })
-    .limit(50);
+export async function getMyNotifications(userId: string, query: PaginationQuery = {}): Promise<IPaginatedResult<INotificationDocument>> {
+  return paginate(
+    Notification,
+    { user: userId },
+    { page: query.page, limit: query.limit, sort: { createdAt: -1 } },
+  ) as Promise<IPaginatedResult<INotificationDocument>>;
 }
 
 export async function markRead(id: string, userId: string) {

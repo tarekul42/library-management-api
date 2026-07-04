@@ -1,19 +1,37 @@
 import { Fine } from '../../models/fine.model.js';
 import { User } from '../../models/user.model.js';
 import { AppError, NotFoundError } from '../../shared/errors.js';
+import { paginate } from '../../shared/pagination.js';
+import type { PaginationQuery, IPaginatedResult } from '../../shared/types.js';
+import type { IFineDocument } from '../../models/fine.model.js';
 
-export async function getMyFines(userId: string) {
-  return Fine.find({ user: userId }).populate({
-    path: "borrow",
-    populate: { path: "book", select: "title" },
-  });
+function buildFineFilter(query: PaginationQuery, userId?: string): Record<string, unknown> {
+  const filter: Record<string, unknown> = {};
+  if (userId) filter.user = userId;
+  if (query.status === "paid") filter.paid = true;
+  if (query.status === "unpaid") filter.paid = false;
+  return filter;
 }
 
-export async function getAll() {
-  return Fine.find().populate("user", "name email").populate({
-    path: "borrow",
-    populate: { path: "book", select: "title" },
-  });
+export async function getMyFines(userId: string, query: PaginationQuery = {}): Promise<IPaginatedResult<IFineDocument>> {
+  return paginate(
+    Fine,
+    buildFineFilter(query, userId),
+    { page: query.page, limit: query.limit, sort: { createdAt: -1 } },
+    { path: "borrow", populate: { path: "book", select: "title" } },
+  ) as Promise<IPaginatedResult<IFineDocument>>;
+}
+
+export async function getAll(query: PaginationQuery = {}): Promise<IPaginatedResult<IFineDocument>> {
+  return paginate(
+    Fine,
+    buildFineFilter(query),
+    { page: query.page, limit: query.limit, sort: { createdAt: -1 } },
+    [
+      { path: "user", select: "name email" },
+      { path: "borrow", populate: { path: "book", select: "title" } },
+    ],
+  ) as Promise<IPaginatedResult<IFineDocument>>;
 }
 
 export async function payFine(fineId: string, userId: string) {
