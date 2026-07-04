@@ -1,4 +1,5 @@
 import type { Context } from "hono";
+import { ZodError } from "zod";
 import { getLogger, getEnv } from '../config/index.js';
 
 export class AppError extends Error {
@@ -41,6 +42,21 @@ export class ValidationError extends AppError {
 }
 
 export async function errorHandler(err: Error, c: Context) {
+  if (err instanceof ZodError) {
+    return c.json(
+      {
+        success: false,
+        message: "Validation failed",
+        error: {
+          code: 400,
+          description: "Validation failed",
+          details: err.issues,
+        },
+      },
+      400,
+    );
+  }
+
   if (err instanceof AppError) {
     return c.json(
       {
