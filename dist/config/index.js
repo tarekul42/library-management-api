@@ -1,3 +1,3 @@
 export { loadEnv, getEnv } from './env.js';
-export { logger } from './logger.js';
+export { getLogger } from './logger.js';
 //# sourceMappingURL=index.js.map
