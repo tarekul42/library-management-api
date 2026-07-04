@@ -38,13 +38,31 @@ app.use("*", securityHeadersMiddleware);
 app.use("*", compressionMiddleware);
 app.use("*", apiRateLimiter);
 app.use("/api/auth/*", authRateLimiter);
+app.use("/api/v1/auth/*", authRateLimiter);
 app.use("*", requestLogger);
 
 app.get("/", (c) =>
   c.json({ success: true, message: "Welcome to Library Management API!" }),
 );
 
-app.get("/api/health", (c) =>
+const apiRoot = new Hono();
+
+apiRoot.route("/auth", authRoutes);
+apiRoot.route("/users", userRoutes);
+apiRoot.route("/books", bookRoutes);
+apiRoot.route("/borrow", borrowRoutes);
+apiRoot.route("/authors", authorRoutes);
+apiRoot.route("/categories", categoryRoutes);
+apiRoot.route("/fines", fineRoutes);
+apiRoot.route("/reviews", reviewRoutes);
+apiRoot.route("/notifications", notificationRoutes);
+apiRoot.route("/dashboard", dashboardRoutes);
+apiRoot.route("/uploads", uploadRoutes);
+apiRoot.route("/wishlist", wishlistRoutes);
+apiRoot.route("/reservations", reservationRoutes);
+apiRoot.route("/reports", reportRoutes);
+
+apiRoot.get("/health", (c) =>
   c.json({
     success: true,
     message: "OK",
@@ -52,20 +70,8 @@ app.get("/api/health", (c) =>
   }),
 );
 
-app.route("/api/auth", authRoutes);
-app.route("/api/users", userRoutes);
-app.route("/api/books", bookRoutes);
-app.route("/api/borrow", borrowRoutes);
-app.route("/api/authors", authorRoutes);
-app.route("/api/categories", categoryRoutes);
-app.route("/api/fines", fineRoutes);
-app.route("/api/reviews", reviewRoutes);
-app.route("/api/notifications", notificationRoutes);
-app.route("/api/dashboard", dashboardRoutes);
-app.route("/api/uploads", uploadRoutes);
-app.route("/api/wishlist", wishlistRoutes);
-app.route("/api/reservations", reservationRoutes);
-app.route("/api/reports", reportRoutes);
+app.route("/api", apiRoot);
+app.route("/api/v1", apiRoot);
 
 app.onError(errorHandler);
 app.notFound(notFoundHandler);

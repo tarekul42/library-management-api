@@ -43,5 +43,8 @@ export const authRateLimiter = rateLimiter({
   message: { success: false, message: "Too many attempts. Please try again later." },
   statusCode: 429,
   store: new MemoryStore(),
-  skip: (c: Context) => !c.req.path.startsWith("/api/auth"),
+  skip: (c: Context) => {
+    const path = c.req.path;
+    return !path.startsWith("/api/auth") && !path.startsWith("/api/v1/auth");
+  },
 });
