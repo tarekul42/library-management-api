@@ -7,6 +7,7 @@ import { User } from '../models/user.model.js';
 import { getNotificationQueue, getOverdueQueue } from './queues.js';
 import { getLogger } from '../config/index.js';
 import { calculateOverdueDays, calculateFineAmount } from '../shared/overdue.js';
+import { isDuplicateKeyError } from '../shared/errors.js';
 
 async function processOverdueBorrow(borrow: IBorrowDocument, now: Date): Promise<void> {
   const overdueDays = calculateOverdueDays(borrow.dueDate, now);
@@ -33,8 +34,7 @@ async function processOverdueBorrow(borrow: IBorrowDocument, now: Date): Promise
       message: `"${bookTitle}" is overdue by ${overdueDays} day(s). A fine of $${amount} has been applied.`,
     });
   } catch (err: unknown) {
-    const code = (err as { code?: number })?.code;
-    if (code === 11000) {
+    if (isDuplicateKeyError(err)) {
       getLogger().warn({ borrowId: borrow._id }, "Fine already exists for overdue borrow — marking as overdue without duplicate fine");
     } else {
       getLogger().error({ err, borrowId: borrow._id }, "Failed to process overdue borrow");

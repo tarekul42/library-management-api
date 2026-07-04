@@ -2,7 +2,7 @@ import { Borrow, IBorrowDocument } from '../../models/borrow.model.js';
 import { Book } from '../../models/book.model.js';
 import { Fine } from '../../models/fine.model.js';
 import { User } from '../../models/user.model.js';
-import { AppError, NotFoundError } from '../../shared/errors.js';
+import { AppError, NotFoundError, isDuplicateKeyError } from '../../shared/errors.js';
 import { MAX_BORROW_BOOKS, MAX_BORROW_DAYS, MAX_RENEWALS } from '../../shared/constants.js';
 import { calculateOverdueDays, calculateFineAmount } from '../../shared/overdue.js';
 import { getNotificationQueue, getReservationQueue } from '../../workers/queues.js';
@@ -81,7 +81,7 @@ async function handleOverdueReturn(
     await borrow.save();
     await User.findByIdAndUpdate(borrow.user, { $inc: { fineBalance: amount } });
   } catch (err: unknown) {
-    if ((err as { code?: number })?.code !== 11000) throw err;
+    if (!isDuplicateKeyError(err)) throw err;
   }
 
   await getNotificationQueue().add("fine", {

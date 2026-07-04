@@ -75,6 +75,10 @@ export async function errorHandler(err: Error, c: Context) {
   );
 }
 
+export function isDuplicateKeyError(err: unknown): boolean {
+  return (err as { code?: number })?.code === 11000;
+}
+
 export async function notFoundHandler(c: Context) {
   return c.json(
     {
