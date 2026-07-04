@@ -1,5 +1,5 @@
 import type { Context } from "hono";
-import { getLogger } from '../config/index.js';
+import { getLogger, getEnv } from '../config/index.js';
 
 export class AppError extends Error {
   public statusCode: number;
@@ -66,7 +66,7 @@ export async function errorHandler(err: Error, c: Context) {
       error: {
         code: 500,
         description:
-          (process.env.NODE_ENV ?? "development") === "development"
+          getEnv().NODE_ENV === "development"
             ? err.message
             : "Something went wrong",
       },
