@@ -37,7 +37,13 @@ export async function getOrSet<T>(
 export async function invalidateCache(pattern: string): Promise<void> {
   try {
     const redis = getRedis();
-    const keys = await redis.keys(pattern);
+    const keys: string[] = [];
+    let cursor = "0";
+    do {
+      const [nextCursor, batch] = await redis.scan(cursor, "MATCH", pattern, "COUNT", 100);
+      cursor = nextCursor;
+      keys.push(...batch);
+    } while (cursor !== "0");
     if (keys.length > 0) {
       await redis.del(...keys);
     }
