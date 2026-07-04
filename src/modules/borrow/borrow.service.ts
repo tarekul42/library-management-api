@@ -54,12 +54,48 @@ export async function createBorrow(userId: string, input: { book: string; dueDat
   });
 }
 
-export async function returnBorrow(borrowId: string, userId: string, userRole: string) {
-  const borrow = await Borrow.findById(borrowId);
-  if (!borrow) throw new NotFoundError("Borrow record not found");
+function assertBorrowOwnership(borrow: IBorrowDocument, userId: string, userRole: string): void {
   if (borrow.user.toString() !== userId && userRole !== "admin") {
     throw new AppError("Unauthorized", 403);
   }
+}
+
+async function handleOverdueReturn(
+  borrow: IBorrowDocument,
+  bookTitle: string | undefined,
+): Promise<void> {
+  if (borrow.fine || !(borrow.dueDate < new Date())) return;
+
+  const overdueDays = calculateOverdueDays(borrow.dueDate);
+  const amount = calculateFineAmount(overdueDays, borrow.quantity);
+  const title = bookTitle ?? "Unknown";
+
+  try {
+    const fine = await Fine.create({
+      user: borrow.user,
+      borrow: borrow._id,
+      amount,
+      reason: `Overdue by ${overdueDays} day(s) for "${title}"`,
+    });
+    borrow.fine = fine._id;
+    await borrow.save();
+    await User.findByIdAndUpdate(borrow.user, { $inc: { fineBalance: amount } });
+  } catch (err: unknown) {
+    if ((err as { code?: number })?.code !== 11000) throw err;
+  }
+
+  await getNotificationQueue().add("fine", {
+    userId: borrow.user.toString(),
+    type: "fine",
+    title: "Fine Incurred",
+    message: `A fine of $${amount} has been applied for overdue return of "${title}".`,
+  });
+}
+
+export async function returnBorrow(borrowId: string, userId: string, userRole: string) {
+  const borrow = await Borrow.findById(borrowId);
+  if (!borrow) throw new NotFoundError("Borrow record not found");
+  assertBorrowOwnership(borrow, userId, userRole);
 
   borrow.returnedAt = new Date();
   borrow.status = "returned";
@@ -71,34 +107,10 @@ export async function returnBorrow(borrowId: string, userId: string, userRole: s
       { $set: { availableCopies: { $add: ["$availableCopies", borrow.quantity] } } },
       { $set: { available: { $gt: ["$availableCopies", 0] } } },
     ],
-    { new: true }
+    { new: true },
   );
 
-  if (!borrow.fine && borrow.dueDate < new Date()) {
-    const overdueDays = calculateOverdueDays(borrow.dueDate);
-    const amount = calculateFineAmount(overdueDays, borrow.quantity);
-
-    try {
-      const fine = await Fine.create({
-        user: borrow.user,
-        borrow: borrow._id,
-        amount,
-        reason: `Overdue by ${overdueDays} day(s) for "${book?.title ?? "Unknown"}"`,
-      });
-      borrow.fine = fine._id;
-      await borrow.save();
-      await User.findByIdAndUpdate(borrow.user, { $inc: { fineBalance: amount } });
-    } catch (err: unknown) {
-      if ((err as { code?: number })?.code !== 11000) throw err;
-    }
-
-    await getNotificationQueue().add("fine", {
-      userId: borrow.user.toString(),
-      type: "fine",
-      title: "Fine Incurred",
-      message: `A fine of $${amount} has been applied for overdue return of "${book?.title ?? "Unknown"}".`,
-    });
-  }
+  await handleOverdueReturn(borrow, book?.title);
 
   await getReservationQueue().add("fulfill", { bookId: (book?._id ?? borrow.book).toString() });
 
@@ -108,9 +120,7 @@ export async function returnBorrow(borrowId: string, userId: string, userRole: s
 export async function renewBorrow(borrowId: string, userId: string, userRole: string) {
   const borrow = await Borrow.findById(borrowId);
   if (!borrow) throw new NotFoundError("Borrow record not found");
-  if (borrow.user.toString() !== userId && userRole !== "admin") {
-    throw new AppError("Unauthorized", 403);
-  }
+  assertBorrowOwnership(borrow, userId, userRole);
   if (borrow.status !== "active") {
     throw new AppError("Only active borrows can be renewed", 400);
   }
