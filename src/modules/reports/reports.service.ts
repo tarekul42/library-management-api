@@ -41,6 +41,21 @@ function csvSerialize(rows: Record<string, unknown>[], columns: string[]): strin
   return `${header}\n${body}`;
 }
 
+type ReportResult = { format: string; filename: string; content: string | Buffer };
+
+async function serializeReport(
+  title: string,
+  filenamePrefix: string,
+  format: string,
+  columns: string[],
+  rows: Record<string, unknown>[],
+): Promise<ReportResult> {
+  const filename = `${filenamePrefix}.${format}`;
+  if (format === "csv") return { format, filename, content: csvSerialize(rows, columns) };
+  const pdfBuffer = await generatePDF(title, columns, rows, filename);
+  return { format, filename, content: pdfBuffer };
+}
+
 function buildFilter(
   model: string,
   status: string | undefined,
@@ -92,11 +107,7 @@ export async function generateBorrowReport(queryParams: Record<string, string | 
     "Returned At": b.returnedAt?.toISOString() ?? "",
   }));
 
-  const filename = `borrows-report.${format}`;
-  if (format === "csv") return { format, filename, content: csvSerialize(rows, columns) };
-
-  const pdfBuffer = await generatePDF("Library Borrow Report", columns, rows, filename);
-  return { format, filename, content: pdfBuffer };
+  return serializeReport("Library Borrow Report", "borrows-report", format, columns, rows);
 }
 
 export async function generateFinesReport(queryParams: Record<string, string | undefined>) {
@@ -121,11 +132,7 @@ export async function generateFinesReport(queryParams: Record<string, string | u
     Date: f.createdAt.toISOString(),
   }));
 
-  const filename = `fines-report.${format}`;
-  if (format === "csv") return { format, filename, content: csvSerialize(rows, columns) };
-
-  const pdfBuffer = await generatePDF("Library Fines Report", columns, rows, filename);
-  return { format, filename, content: pdfBuffer };
+  return serializeReport("Library Fines Report", "fines-report", format, columns, rows);
 }
 
 export async function generateBooksReport(queryParams: Record<string, string | undefined>) {
@@ -143,11 +150,7 @@ export async function generateBooksReport(queryParams: Record<string, string | u
     Rating: b.avgRating.toFixed(1),
   }));
 
-  const filename = `books-report.${format}`;
-  if (format === "csv") return { format, filename, content: csvSerialize(rows, columns) };
-
-  const pdfBuffer = await generatePDF("Library Books Report", columns, rows, filename);
-  return { format, filename, content: pdfBuffer };
+  return serializeReport("Library Books Report", "books-report", format, columns, rows);
 }
 
 export async function generatePopularReport(queryParams: Record<string, string | undefined>) {
@@ -183,9 +186,5 @@ export async function generatePopularReport(queryParams: Record<string, string |
     "Times Borrowed": b.borrowCount.toString(),
   }));
 
-  const filename = `popular-books-report.${format}`;
-  if (format === "csv") return { format, filename, content: csvSerialize(rows, columns) };
-
-  const pdfBuffer = await generatePDF("Popular Books Report", columns, rows, filename);
-  return { format, filename, content: pdfBuffer };
+  return serializeReport("Popular Books Report", "popular-books-report", format, columns, rows);
 }
