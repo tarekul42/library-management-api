@@ -52,7 +52,7 @@ const apiRoot = new Hono();
 apiRoot.route("/auth", authRoutes);
 apiRoot.route("/users", userRoutes);
 apiRoot.route("/books", bookRoutes);
-apiRoot.route("/borrow", borrowRoutes);
+apiRoot.route("/borrows", borrowRoutes);
 apiRoot.route("/authors", authorRoutes);
 apiRoot.route("/categories", categoryRoutes);
 apiRoot.route("/fines", fineRoutes);
