@@ -162,16 +162,18 @@ export async function getAllBorrows(query: PaginationQuery): Promise<IPaginatedR
   return getBorrows(filter, query);
 }
 
-export async function getActiveBorrows() {
-  return Borrow.find({ status: "active" })
-    .populate("user", "name email")
-    .populate("book", "title isbn");
+export async function getActiveBorrows(page: number = 1, limit: number = 50) {
+  return paginate(Borrow, { status: "active" }, { page, limit, sort: { createdAt: -1 } }, [
+    { path: "user", select: "name email" },
+    { path: "book", select: "title isbn" },
+  ]);
 }
 
-export async function getOverdueBorrows() {
-  return Borrow.find({ status: "active", dueDate: { $lt: new Date() } })
-    .populate("user", "name email")
-    .populate("book", "title isbn");
+export async function getOverdueBorrows(page: number = 1, limit: number = 50) {
+  return paginate(Borrow, { status: "active", dueDate: { $lt: new Date() } }, { page, limit, sort: { dueDate: 1 } }, [
+    { path: "user", select: "name email" },
+    { path: "book", select: "title isbn" },
+  ]);
 }
 
 export async function getBorrowById(borrowId: string) {

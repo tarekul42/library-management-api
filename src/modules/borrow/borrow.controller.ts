@@ -39,13 +39,17 @@ export async function getAll(c: Context) {
 }
 
 export async function getActive(c: Context) {
-  const data = await borrowService.getActiveBorrows();
-  return c.json({ success: true, message: "Active borrows retrieved", data });
+  const page = Math.max(1, parseInt(c.req.query("page") ?? "1", 10));
+  const limit = Math.min(100, Math.max(1, parseInt(c.req.query("limit") ?? "50", 10)));
+  const result = await borrowService.getActiveBorrows(page, limit);
+  return c.json({ success: true, message: "Active borrows retrieved", ...result });
 }
 
 export async function getOverdue(c: Context) {
-  const data = await borrowService.getOverdueBorrows();
-  return c.json({ success: true, message: "Overdue borrows retrieved", data });
+  const page = Math.max(1, parseInt(c.req.query("page") ?? "1", 10));
+  const limit = Math.min(100, Math.max(1, parseInt(c.req.query("limit") ?? "50", 10)));
+  const result = await borrowService.getOverdueBorrows(page, limit);
+  return c.json({ success: true, message: "Overdue borrows retrieved", ...result });
 }
 
 export async function renew(c: Context) {

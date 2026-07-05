@@ -23,9 +23,9 @@ export async function getById(id: string) {
   return getOrSet(authorCacheKey(id), () => findByIdOrThrow(Author, id, "Author not found"), AUTHOR_CACHE_TTL);
 }
 
-export async function getBooks(id: string) {
+export async function getBooks(id: string, page: number = 1, limit: number = 50) {
   await findByIdOrThrow(Author, id, "Author not found");
-  return Book.find({ author: id }).sort({ title: 1 });
+  return paginate(Book, { author: id }, { page, limit, sort: { title: 1 } });
 }
 
 export async function create(input: CreateAuthorInput) {

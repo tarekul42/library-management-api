@@ -9,8 +9,10 @@ const createWishlistSchema = z.object({
 
 export async function getMyWishlist(c: Context) {
   const userId = c.get("userId");
-  const data = await wishlistService.getMyWishlist(userId);
-  return c.json({ success: true, message: "Wishlist retrieved", data });
+  const page = Math.max(1, parseInt(c.req.query("page") ?? "1", 10));
+  const limit = Math.min(100, Math.max(1, parseInt(c.req.query("limit") ?? "50", 10)));
+  const result = await wishlistService.getMyWishlist(userId, { page, limit });
+  return c.json({ success: true, message: "Wishlist retrieved", ...result });
 }
 
 export async function add(c: Context) {

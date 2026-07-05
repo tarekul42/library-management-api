@@ -18,8 +18,10 @@ export async function getById(c: Context) {
 
 export async function getBooks(c: Context) {
   const id = c.req.param("id") ?? "";
-  const data = await authorService.getBooks(id);
-  return c.json({ success: true, message: "Author books retrieved", data });
+  const page = Math.max(1, parseInt(c.req.query("page") ?? "1", 10));
+  const limit = Math.min(100, Math.max(1, parseInt(c.req.query("limit") ?? "50", 10)));
+  const result = await authorService.getBooks(id, page, limit);
+  return c.json({ success: true, message: "Author books retrieved", ...result });
 }
 
 export async function create(c: Context) {
