@@ -19,6 +19,6 @@ const categorySchema = new Schema<ICategoryDocument>(
   { timestamps: true, versionKey: false },
 );
 
-categorySchema.index({ slug: 1 });
+
 
 export const Category = mongoose.model<ICategoryDocument>("Category", categorySchema);

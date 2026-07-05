@@ -12,7 +12,12 @@ export function getRedis(): Redis {
     enableOfflineQueue: false,
     lazyConnect: true,
   });
+  client.on("error", () => {});
   return client;
+}
+
+export function isRedisReady(): boolean {
+  return client?.status === "ready";
 }
 
 export async function connectRedis(): Promise<void> {

@@ -102,7 +102,7 @@ export async function notFoundHandler(c: Context) {
       message: "Route not found",
       error: {
         code: 404,
-        description: `Route ${c.req.method} ${c.req.url} not found`,
+        description: `Route ${c.req.method} ${new URL(c.req.url).pathname} not found`,
       },
     },
     404,

@@ -1,4 +1,4 @@
-import { connectRedis } from '../utils/redis.js';
+import { connectRedis, isRedisReady } from '../utils/redis.js';
 import { initQueues } from './queues.js';
 import { createNotificationWorker } from './notification.worker.js';
 import { createOverdueWorker, scheduleOverdueCheck } from './overdue.worker.js';
@@ -11,10 +11,16 @@ let reservationWorker: ReturnType<typeof createReservationWorker> | null = null;
 
 export async function startWorkers(): Promise<void> {
   await connectRedis();
-  getLogger().info("Redis connected, initializing queues...");
-  await initQueues();
-  getLogger().info("Queues initialized, starting BullMQ workers...");
 
+  await initQueues();
+  getLogger().info("Queues initialized");
+
+  if (!isRedisReady()) {
+    getLogger().warn("Redis unavailable — workers not started");
+    return;
+  }
+
+  getLogger().info("Starting BullMQ workers...");
   notificationWorker = createNotificationWorker();
   overdueWorker = createOverdueWorker();
   reservationWorker = createReservationWorker();

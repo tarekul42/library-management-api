@@ -50,7 +50,6 @@ const bookSchema = new Schema<IBookDocument>(
 
 bookSchema.index({ title: "text", description: "text", tags: "text" });
 bookSchema.index({ genre: 1, available: 1 });
-bookSchema.index({ isbn: 1 });
 bookSchema.index({ avgRating: -1 });
 bookSchema.index({ createdAt: -1 });
 

@@ -34,7 +34,6 @@ app.use("*", (c, next) => {
   return next();
 });
 
-app.use("*", bodyLimit({ maxSize: 1024 * 1024 }));
 app.use("*", corsMiddleware);
 app.use("*", securityHeadersMiddleware);
 app.use("*", compressionMiddleware);

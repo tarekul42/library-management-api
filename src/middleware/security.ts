@@ -23,6 +23,19 @@ export const securityHeadersMiddleware = secureHeaders({
     microphone: [],
     geolocation: [],
   },
+  contentSecurityPolicy: {
+    defaultSrc: ["'self'"],
+    scriptSrc: ["'self'"],
+    styleSrc: ["'self'", "'unsafe-inline'"],
+    imgSrc: ["'self'", "data:", "https://res.cloudinary.com"],
+    connectSrc: ["'self'"],
+    fontSrc: ["'self'"],
+    objectSrc: ["'none'"],
+    frameAncestors: ["'none'"],
+    formAction: ["'self'"],
+    baseUri: ["'self'"],
+    upgradeInsecureRequests: [],
+  },
 });
 
 export const apiRateLimiter = rateLimiter({
