@@ -39,5 +39,5 @@ export async function updateBook(c: Context) {
 export async function deleteBook(c: Context) {
   const id = c.req.param("bookId") ?? "";
   await bookService.deleteBook(id);
-  return c.json({ success: true, message: "Book deleted successfully", data: null });
+  return c.body(null, 204);
 }

@@ -40,5 +40,5 @@ export async function update(c: Context) {
 export async function remove(c: Context) {
   const id = c.req.param("id") ?? "";
   await categoryService.remove(id);
-  return c.json({ success: true, message: "Category deleted", data: null });
+  return c.body(null, 204);
 }

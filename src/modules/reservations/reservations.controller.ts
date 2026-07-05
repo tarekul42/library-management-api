@@ -34,7 +34,7 @@ export async function remove(c: Context) {
   const userId = c.get("userId");
   const id = c.req.param("id") ?? "";
   await reservationService.cancelReservation(id, userId);
-  return c.json({ success: true, message: "Reservation cancelled", data: null });
+  return c.body(null, 204);
 }
 
 export async function fulfill(c: Context) {

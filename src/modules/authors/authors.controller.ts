@@ -46,5 +46,5 @@ export async function update(c: Context) {
 export async function remove(c: Context) {
   const id = c.req.param("id") ?? "";
   await authorService.remove(id);
-  return c.json({ success: true, message: "Author deleted", data: null });
+  return c.body(null, 204);
 }

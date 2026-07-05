@@ -28,5 +28,5 @@ export async function remove(c: Context) {
   const userId = c.get("userId");
   const bookId = c.req.param("bookId") ?? "";
   await wishlistService.removeItem(userId, bookId);
-  return c.json({ success: true, message: "Book removed from wishlist", data: null });
+  return c.body(null, 204);
 }
