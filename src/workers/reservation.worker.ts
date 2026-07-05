@@ -46,6 +46,10 @@ export function createReservationWorker(): Worker {
     { connection: conn },
   );
 
+  worker.on("error", (err) => {
+    getLogger().error({ err }, "Reservation worker error");
+  });
+
   worker.on("completed", (job) => {
     getLogger().info(`Reservation job ${job.id} completed`);
   });

@@ -67,6 +67,10 @@ export function createOverdueWorker(): Worker {
     { connection: conn },
   );
 
+  worker.on("error", (err) => {
+    getLogger().error({ err }, "Overdue worker error");
+  });
+
   worker.on("completed", (job) => {
     getLogger().info(`Overdue check job ${job.id} completed`);
   });

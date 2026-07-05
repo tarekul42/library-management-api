@@ -22,6 +22,10 @@ export function createNotificationWorker(): Worker {
     { connection: conn },
   );
 
+  worker.on("error", (err) => {
+    getLogger().error({ err }, "Notification worker error");
+  });
+
   worker.on("completed", (job) => {
     getLogger().info(`Notification job ${job.id} completed: ${job.data.type}`);
   });
