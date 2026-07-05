@@ -1,59 +1,61 @@
-import express, { Application, NextFunction, Request, Response } from "express";
-import cors from "cors";
-import config from "./config";
-import mongoose from "mongoose";
-import routes from "./modules/routes";
+import { serve, type ServerType } from "@hono/node-server";
+import { v2 as cloudinary } from "cloudinary";
+import app from './app.js';
+import { getEnv, getLogger } from './config/index.js';
+import { connectDatabase, disconnectDatabase } from './utils/connection.js';
+import { disconnectRedis } from './utils/redis.js';
+import { startWorkers, stopWorkers } from './workers/index.js';
 
-const app: Application = express();
+let server: ServerType | null = null;
 
-app.use(cors());
-app.use(express.json());
+async function main() {
+  const env = getEnv();
 
-app.use(routes);
-
-app.get("/", (req: Request, res: Response) => {
-  res.status(200).json({
-    success: true,
-    message: "Welcome to Library Management Server!",
-  });
-});
-
-// universal 404 handler
-app.use((req: Request, res: Response, next: NextFunction) => {
-  res.status(404).json({
-    success: false,
-    message: "Route not found",
-    error: {
-      code: 404,
-      description: "The requested endpoint does not exist.",
-    },
-  });
-  next();
-});
-
-// global error handler
-app.use((error: any, req: Request, res: Response, next: NextFunction) => {
-  if (error) {
-    console.log("Error", error);
-    res
-      .status(400)
-      .json({ message: "Something went wrong from global error", error });
-  }
-  next();
-});
-
-async function server() {
-  try {
-    await mongoose.connect(config.database_url as string);
-    console.log("Database connected successfully");
-
-    app.listen(config.port, () => {
-      console.log(`Library management API is running on port: ${config.port}`);
+  if (env.CLOUDINARY_CLOUD_NAME && env.CLOUDINARY_API_KEY && env.CLOUDINARY_API_SECRET) {
+    cloudinary.config({
+      cloud_name: env.CLOUDINARY_CLOUD_NAME,
+      api_key: env.CLOUDINARY_API_KEY,
+      api_secret: env.CLOUDINARY_API_SECRET,
     });
-    
-  } catch (error) {
-    console.error(`Library management API got error: ${error}`);
+    getLogger().info("Cloudinary configured");
   }
+
+  await connectDatabase(env.DATABASE_URL);
+  await startWorkers();
+
+  server = serve(
+    { fetch: app.fetch, port: env.PORT },
+    (info) => {
+      getLogger().info(`API server running on http://localhost:${info.port}`);
+    },
+  );
 }
 
-server();
+async function shutdown(exitCode: number = 0) {
+  getLogger().info("Shutting down gracefully...");
+  if (server) {
+    server.close();
+  }
+  await stopWorkers();
+  await disconnectDatabase();
+  await disconnectRedis();
+  process.exit(exitCode);
+}
+
+process.on("SIGTERM", () => shutdown(0));
+process.on("SIGINT", () => shutdown(0));
+
+process.on("uncaughtException", (err) => {
+  getLogger().error({ err }, "Uncaught exception — shutting down");
+  shutdown(1);
+});
+
+process.on("unhandledRejection", (reason) => {
+  getLogger().error({ err: reason }, "Unhandled rejection — shutting down");
+  shutdown(1);
+});
+
+main().catch((err) => {
+  getLogger().error({ err }, "Failed to start server");
+  process.exit(1);
+});

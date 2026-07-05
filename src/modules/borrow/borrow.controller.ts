@@ -1,138 +1,73 @@
-import { Request, Response } from "express";
-import Borrow from "./borrow.model";
-import Book from "../book/book.model";
+import type { Context } from "hono";
+import { createBorrowSchema, borrowQuerySchema } from '../../schemas/borrow.schema.js';
+import { ForbiddenError, ValidationError } from '../../shared/errors.js';
+import * as borrowService from './borrow.service.js';
 
-const createBorrow = async (req: Request, res: Response): Promise<void> => {
-  try {
-    const { book: bookId, quantity, dueDate } = req.body;
+export async function create(c: Context) {
+  const userId = c.get("userId");
+  const body = await c.req.json();
+  const parsed = createBorrowSchema.safeParse(body);
+  if (!parsed.success) throw new ValidationError("Validation failed", parsed.error.issues);
+  const input = parsed.data;
+  const data = await borrowService.createBorrow(userId, input);
+  return c.json({ success: true, data }, 201);
+}
 
-    // validate required fields
-    if (!bookId || quantity === undefined || !dueDate) {
-      res.status(400).json({
-        success: false,
-        message: "Book ID, quantity, and due date are required",
-      });
-      return;
-    }
+export async function returnBook(c: Context) {
+  const userId = c.get("userId");
+  const userRole = c.get("userRole");
+  const id = c.req.param("id") ?? "";
+  const data = await borrowService.returnBorrow(id, userId, userRole);
+  return c.json({ success: true, data });
+}
 
-    // validate quantity
-    if (
-      typeof quantity !== "number" ||
-      quantity <= 0 ||
-      !Number.isInteger(quantity)
-    ) {
-      res.status(400).json({
-        success: false,
-        message: "Quantity must be a positive integer",
-      });
-      return;
-    }
+export async function getMyBorrows(c: Context) {
+  const userId = c.get("userId");
+  const parsed = borrowQuerySchema.safeParse(c.req.query());
+  if (!parsed.success) throw new ValidationError("Validation failed", parsed.error.issues);
+  const query = parsed.data;
+  const result = await borrowService.getUserBorrows(userId, query);
+  return c.json({ success: true, ...result });
+}
 
-    // validate due date
-    const due = new Date(dueDate);
-    if (isNaN(due.getTime()) || due <= new Date()) {
-      res.status(400).json({
-        success: false,
-        message: "Due date must be a valid date for future",
-      });
-      return;
-    }
+export async function getAll(c: Context) {
+  const parsed = borrowQuerySchema.safeParse(c.req.query());
+  if (!parsed.success) throw new ValidationError("Validation failed", parsed.error.issues);
+  const query = parsed.data;
+  const result = await borrowService.getAllBorrows(query);
+  return c.json({ success: true, ...result });
+}
 
-    // find the book by ID
-    const book = await Book.findById(bookId);
-    if (!book) {
-      res.status(404).json({
-        success: false,
-        message: "Book not found",
-      });
-      return;
-    }
+export async function getActive(c: Context) {
+  const page = Math.max(1, parseInt(c.req.query("page") ?? "1", 10));
+  const limit = Math.min(100, Math.max(1, parseInt(c.req.query("limit") ?? "50", 10)));
+  const result = await borrowService.getActiveBorrows(page, limit);
+  return c.json({ success: true, ...result });
+}
 
-    // check "copies" availability
-    if (book.copies < quantity) {
-      res.status(400).json({
-        success: false,
-        message: `Only ${book.copies} copies are available!`,
-      });
-      return;
-    }
+export async function getOverdue(c: Context) {
+  const page = Math.max(1, parseInt(c.req.query("page") ?? "1", 10));
+  const limit = Math.min(100, Math.max(1, parseInt(c.req.query("limit") ?? "50", 10)));
+  const result = await borrowService.getOverdueBorrows(page, limit);
+  return c.json({ success: true, ...result });
+}
 
+export async function renew(c: Context) {
+  const userId = c.get("userId");
+  const userRole = c.get("userRole");
+  const id = c.req.param("id") ?? "";
+  const data = await borrowService.renewBorrow(id, userId, userRole);
+  return c.json({ success: true, data });
+}
 
-    book.copies -= quantity;
-    await book.updateAvailability();
-
-    // create a borrow record
-    const data = await Borrow.create({
-      book: book._id,
-      quantity,
-      dueDate: due,
-    });
-
-    res.status(201).json({
-      success: true,
-      message: "Book borrowed successfully",
-      data,
-    });
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: "Validation failed",
-      error,
-    });
+export async function getById(c: Context) {
+  const borrowId = c.req.param("id") ?? "";
+  const userId = c.get("userId");
+  const userRole = c.get("userRole");
+  const data = await borrowService.getBorrowById(borrowId);
+  const borrowerId = data.user?._id?.toString();
+  if (borrowerId !== userId && userRole !== "admin") {
+    throw new ForbiddenError("Forbidden");
   }
-};
-
-const getBorrow = async (req: Request, res: Response) => {
-  try {
-    const data = await Borrow.aggregate([
-      {
-        $group: {
-          _id: "$book",
-          totalQuantity: {
-            $sum: "$quantity",
-          },
-        },
-      },
-      {
-        $lookup: {
-          from: "books",
-          localField: "_id",
-          foreignField: "_id",
-          as: "bookDetails",
-        },
-      },
-      {
-        $unwind: "$bookDetails",
-      },
-      {
-        $project: {
-          _id: 0,
-          book: {
-            title: "$bookDetails.title",
-            isbn: "$bookDetails.isbn",
-          },
-          totalQuantity: 1,
-        },
-      },
-    ]);
-
-    res.status(200).json({
-      success: true,
-      message: "Borrowed books summary retrieved successfully",
-      data,
-    });
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: "Validation failed",
-      error,
-    });
-  }
-};
-
-export const borrowController = {
-  createBorrow,
-  getBorrow,
-};
-
-
+  return c.json({ success: true, data });
+}
