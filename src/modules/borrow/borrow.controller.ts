@@ -55,7 +55,8 @@ export async function getById(c: Context) {
   const userId = c.get("userId");
   const userRole = c.get("userRole");
   const data = await borrowService.getBorrowById(borrowId);
-  if (data.user._id.toString() !== userId && userRole !== "admin") {
+  const borrowerId = data.user?._id?.toString();
+  if (borrowerId !== userId && userRole !== "admin") {
     throw new ForbiddenError("Forbidden");
   }
   return c.json({ success: true, message: "Borrow retrieved", data });
