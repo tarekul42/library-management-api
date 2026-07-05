@@ -2,7 +2,7 @@ import bcrypt from "bcryptjs";
 import jwt, { type SignOptions } from "jsonwebtoken";
 import crypto from "node:crypto";
 import { User, type IUserDocument } from '../../models/user.model.js';
-import { getEnv, type Env } from '../../config/index.js';
+import { getEnv, getLogger, type Env } from '../../config/index.js';
 import { AppError } from '../../shared/errors.js';
 import type { RegisterInput, LoginInput } from '../../schemas/auth.schema.js';
 import { getRedis } from '../../utils/redis.js';
@@ -157,12 +157,20 @@ export async function forgotPassword(email: string) {
   user.resetPasswordExpires = new Date(Date.now() + 60 * 60 * 1000);
   await user.save();
 
-  const resetUrl = `${getEnv().CORS_ORIGIN}/reset-password/${resetToken}`;
-  await sendEmail(
-    user.email,
-    "Password Reset Request",
-    `<p>You requested a password reset. Click <a href="${resetUrl}">here</a> to reset your password. This link expires in 1 hour.</p>`,
-  );
+  try {
+    const resetUrl = `${getEnv().CORS_ORIGIN}/reset-password/${resetToken}`;
+    await sendEmail(
+      user.email,
+      "Password Reset Request",
+      `<p>You requested a password reset. Click <a href="${resetUrl}">here</a> to reset your password. This link expires in 1 hour.</p>`,
+    );
+  } catch (err) {
+    user.resetPasswordToken = undefined;
+    user.resetPasswordExpires = undefined;
+    await user.save();
+    getLogger().error({ err }, "Failed to send password reset email");
+    throw new AppError("Failed to send reset email. Please try again later.", 500);
+  }
 }
 
 export async function changePassword(userId: string, currentPassword: string, newPassword: string) {
