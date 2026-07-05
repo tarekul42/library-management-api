@@ -18,7 +18,7 @@ export async function getMyReservations(c: Context) {
   if (!parsed.success) throw new ValidationError("Validation failed", parsed.error.issues);
   const query = parsed.data;
   const result = await reservationService.getMyReservations(userId, query);
-  return c.json({ success: true, message: "Reservations retrieved", ...result });
+  return c.json({ success: true, ...result });
 }
 
 export async function create(c: Context) {
@@ -27,7 +27,7 @@ export async function create(c: Context) {
   const parsed = createReservationSchema.safeParse(body);
   if (!parsed.success) throw new ValidationError("Validation failed", parsed.error.flatten());
   const data = await reservationService.createReservation(userId, parsed.data.book);
-  return c.json({ success: true, message: "Reservation created", data }, 201);
+  return c.json({ success: true, data }, 201);
 }
 
 export async function remove(c: Context) {
@@ -40,5 +40,5 @@ export async function remove(c: Context) {
 export async function fulfill(c: Context) {
   const id = c.req.param("id") ?? "";
   const data = await reservationService.fulfillReservation(id);
-  return c.json({ success: true, message: "Reservation fulfilled", data });
+  return c.json({ success: true, data });
 }

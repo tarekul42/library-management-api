@@ -44,7 +44,7 @@ app.use("/api/v1/auth/*", authRateLimiter);
 app.use("*", requestLogger);
 
 app.get("/", (c) =>
-  c.json({ success: true, message: "Welcome to Library Management API!" }),
+  c.json({ success: true, data: { message: "Welcome to Library Management API!" } }),
 );
 
 const apiRoot = new Hono();
@@ -67,7 +67,6 @@ apiRoot.route("/reports", reportRoutes);
 apiRoot.get("/health", (c) =>
   c.json({
     success: true,
-    message: "OK",
     data: { uptime: process.uptime(), timestamp: new Date().toISOString() },
   }),
 );

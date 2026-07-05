@@ -10,7 +10,7 @@ export async function create(c: Context) {
   if (!parsed.success) throw new ValidationError("Validation failed", parsed.error.issues);
   const input = parsed.data;
   const data = await borrowService.createBorrow(userId, input);
-  return c.json({ success: true, message: "Book borrowed successfully", data }, 201);
+  return c.json({ success: true, data }, 201);
 }
 
 export async function returnBook(c: Context) {
@@ -18,7 +18,7 @@ export async function returnBook(c: Context) {
   const userRole = c.get("userRole");
   const id = c.req.param("id") ?? "";
   const data = await borrowService.returnBorrow(id, userId, userRole);
-  return c.json({ success: true, message: "Book returned successfully", data });
+  return c.json({ success: true, data });
 }
 
 export async function getMyBorrows(c: Context) {
@@ -27,7 +27,7 @@ export async function getMyBorrows(c: Context) {
   if (!parsed.success) throw new ValidationError("Validation failed", parsed.error.issues);
   const query = parsed.data;
   const result = await borrowService.getUserBorrows(userId, query);
-  return c.json({ success: true, message: "Borrows retrieved", ...result });
+  return c.json({ success: true, ...result });
 }
 
 export async function getAll(c: Context) {
@@ -35,21 +35,21 @@ export async function getAll(c: Context) {
   if (!parsed.success) throw new ValidationError("Validation failed", parsed.error.issues);
   const query = parsed.data;
   const result = await borrowService.getAllBorrows(query);
-  return c.json({ success: true, message: "Borrows retrieved", ...result });
+  return c.json({ success: true, ...result });
 }
 
 export async function getActive(c: Context) {
   const page = Math.max(1, parseInt(c.req.query("page") ?? "1", 10));
   const limit = Math.min(100, Math.max(1, parseInt(c.req.query("limit") ?? "50", 10)));
   const result = await borrowService.getActiveBorrows(page, limit);
-  return c.json({ success: true, message: "Active borrows retrieved", ...result });
+  return c.json({ success: true, ...result });
 }
 
 export async function getOverdue(c: Context) {
   const page = Math.max(1, parseInt(c.req.query("page") ?? "1", 10));
   const limit = Math.min(100, Math.max(1, parseInt(c.req.query("limit") ?? "50", 10)));
   const result = await borrowService.getOverdueBorrows(page, limit);
-  return c.json({ success: true, message: "Overdue borrows retrieved", ...result });
+  return c.json({ success: true, ...result });
 }
 
 export async function renew(c: Context) {
@@ -57,7 +57,7 @@ export async function renew(c: Context) {
   const userRole = c.get("userRole");
   const id = c.req.param("id") ?? "";
   const data = await borrowService.renewBorrow(id, userId, userRole);
-  return c.json({ success: true, message: "Borrow renewed successfully", data });
+  return c.json({ success: true, data });
 }
 
 export async function getById(c: Context) {
@@ -69,5 +69,5 @@ export async function getById(c: Context) {
   if (borrowerId !== userId && userRole !== "admin") {
     throw new ForbiddenError("Forbidden");
   }
-  return c.json({ success: true, message: "Borrow retrieved", data });
+  return c.json({ success: true, data });
 }

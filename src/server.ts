@@ -31,7 +31,7 @@ async function main() {
   );
 }
 
-async function shutdown() {
+async function shutdown(exitCode: number = 0) {
   getLogger().info("Shutting down gracefully...");
   if (server) {
     server.close();
@@ -39,20 +39,20 @@ async function shutdown() {
   await stopWorkers();
   await disconnectDatabase();
   await disconnectRedis();
-  process.exit(0);
+  process.exit(exitCode);
 }
 
-process.on("SIGTERM", shutdown);
-process.on("SIGINT", shutdown);
+process.on("SIGTERM", () => shutdown(0));
+process.on("SIGINT", () => shutdown(0));
 
 process.on("uncaughtException", (err) => {
   getLogger().error({ err }, "Uncaught exception — shutting down");
-  shutdown();
+  shutdown(1);
 });
 
 process.on("unhandledRejection", (reason) => {
   getLogger().error({ err: reason }, "Unhandled rejection — shutting down");
-  shutdown();
+  shutdown(1);
 });
 
 main().catch((err) => {

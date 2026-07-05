@@ -1,6 +1,6 @@
 export interface ApiResponse<T> {
   success: boolean;
-  message: string;
+  message?: string;
   data: T;
 }
 
@@ -23,7 +23,7 @@ export interface IPaginatedResult<T> {
 
 export interface PaginatedResponse<T> {
   success: boolean;
-  message: string;
+  message?: string;
   data: T[];
   meta: {
     page: number;

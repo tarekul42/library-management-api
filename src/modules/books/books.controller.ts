@@ -9,7 +9,7 @@ export async function createBook(c: Context) {
   if (!parsed.success) throw new ValidationError("Validation failed", parsed.error.issues);
   const input = parsed.data;
   const data = await bookService.createBook(input);
-  return c.json({ success: true, message: "Book created successfully", data }, 201);
+  return c.json({ success: true, data }, 201);
 }
 
 export async function getBooks(c: Context) {
@@ -17,13 +17,13 @@ export async function getBooks(c: Context) {
   if (!parsed.success) throw new ValidationError("Validation failed", parsed.error.issues);
   const query = parsed.data;
   const result = await bookService.getBooks(query);
-  return c.json({ success: true, message: "Books retrieved successfully", ...result });
+  return c.json({ success: true, ...result });
 }
 
 export async function getBookById(c: Context) {
   const id = c.req.param("bookId") ?? "";
   const data = await bookService.getBookById(id);
-  return c.json({ success: true, message: "Book retrieved successfully", data });
+  return c.json({ success: true, data });
 }
 
 export async function updateBook(c: Context) {
@@ -33,7 +33,7 @@ export async function updateBook(c: Context) {
   if (!parsed.success) throw new ValidationError("Validation failed", parsed.error.issues);
   const input = parsed.data;
   const data = await bookService.updateBook(id, input);
-  return c.json({ success: true, message: "Book updated successfully", data });
+  return c.json({ success: true, data });
 }
 
 export async function deleteBook(c: Context) {

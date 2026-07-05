@@ -15,7 +15,7 @@ export async function getMyFines(c: Context) {
   if (!parsed.success) throw new ValidationError("Validation failed", parsed.error.issues);
   const query = parsed.data;
   const result = await finesService.getMyFines(userId, query);
-  return c.json({ success: true, message: "Fines retrieved", ...result });
+  return c.json({ success: true, ...result });
 }
 
 export async function getAll(c: Context) {
@@ -23,12 +23,12 @@ export async function getAll(c: Context) {
   if (!parsed.success) throw new ValidationError("Validation failed", parsed.error.issues);
   const query = parsed.data;
   const result = await finesService.getAll(query);
-  return c.json({ success: true, message: "Fines retrieved", ...result });
+  return c.json({ success: true, ...result });
 }
 
 export async function pay(c: Context) {
   const userId = c.get("userId");
   const fineId = c.req.param("id") ?? "";
   const data = await finesService.payFine(fineId, userId);
-  return c.json({ success: true, message: "Fine paid", data });
+  return c.json({ success: true, data });
 }

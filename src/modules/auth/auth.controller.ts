@@ -22,7 +22,6 @@ export async function register(c: Context) {
   setCookie(c, REFRESH_COOKIE, result.refreshToken, COOKIE_OPTIONS);
   return c.json({
     success: true,
-    message: "Registration successful",
     data: { user: result.user, accessToken: result.accessToken },
   }, 201);
 }
@@ -36,7 +35,6 @@ export async function login(c: Context) {
   setCookie(c, REFRESH_COOKIE, result.refreshToken, COOKIE_OPTIONS);
   return c.json({
     success: true,
-    message: "Login successful",
     data: { user: result.user, accessToken: result.accessToken },
   });
 }
@@ -50,7 +48,6 @@ export async function refresh(c: Context) {
   setCookie(c, REFRESH_COOKIE, result.refreshToken, COOKIE_OPTIONS);
   return c.json({
     success: true,
-    message: "Token refreshed",
     data: { user: result.user, accessToken: result.accessToken },
   });
 }
@@ -61,14 +58,14 @@ export async function logout(c: Context) {
     await authService.logout(refreshToken);
   }
   deleteCookie(c, REFRESH_COOKIE);
-  return c.json({ success: true, message: "Logged out successfully" });
+  return c.json({ success: true });
 }
 
 export async function changePassword(c: Context) {
   const userId = c.get("userId");
   const { currentPassword, newPassword } = await c.req.json();
   await authService.changePassword(userId, currentPassword, newPassword);
-  return c.json({ success: true, message: "Password changed successfully" });
+  return c.json({ success: true });
 }
 
 export async function forgotPassword(c: Context) {

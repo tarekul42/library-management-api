@@ -1,16 +1,5 @@
 import type { Model, PopulateOptions } from "mongoose";
-
-interface PaginationMeta {
-  page: number;
-  limit: number;
-  total: number;
-  totalPages: number;
-}
-
-interface PaginatedResult<T> {
-  data: T[];
-  meta: PaginationMeta;
-}
+import type { IPaginatedResult } from "./types.js";
 
 async function paginate<T>(
   model: Model<T>,
@@ -18,7 +7,7 @@ async function paginate<T>(
   options: { page?: number; limit?: number; sort?: Record<string, 1 | -1> },
   populate?: string | PopulateOptions | (string | PopulateOptions)[],
   select?: string,
-): Promise<PaginatedResult<T>> {
+): Promise<IPaginatedResult<T>> {
   const page = Math.max(1, options.page || 1);
   const limit = Math.min(100, Math.max(1, options.limit || 10));
   const skip = (page - 1) * limit;
@@ -35,4 +24,4 @@ async function paginate<T>(
   return { data: data as T[], meta: { page, limit, total, totalPages: Math.ceil(total / limit) } };
 }
 
-export { paginate, type PaginationMeta, type PaginatedResult };
+export { paginate };

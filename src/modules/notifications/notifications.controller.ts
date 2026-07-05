@@ -14,18 +14,18 @@ export async function getMyNotifications(c: Context) {
   if (!parsed.success) throw new ValidationError("Validation failed", parsed.error.issues);
   const query = parsed.data;
   const result = await notificationService.getMyNotifications(userId, query);
-  return c.json({ success: true, message: "Notifications retrieved", ...result });
+  return c.json({ success: true, ...result });
 }
 
 export async function markRead(c: Context) {
   const userId = c.get("userId");
   const id = c.req.param("id") ?? "";
   const data = await notificationService.markRead(id, userId);
-  return c.json({ success: true, message: "Notification marked as read", data });
+  return c.json({ success: true, data });
 }
 
 export async function markAllRead(c: Context) {
   const userId = c.get("userId");
   await notificationService.markAllRead(userId);
-  return c.json({ success: true, message: "All notifications marked as read", data: null });
+  return c.json({ success: true, data: null });
 }

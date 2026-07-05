@@ -12,7 +12,7 @@ const createReviewSchema = z.object({
 export async function getBookReviews(c: Context) {
   const bookId = c.req.param("bookId") ?? "";
   const data = await reviewsService.getBookReviews(bookId);
-  return c.json({ success: true, message: "Reviews retrieved", data });
+  return c.json({ success: true, data });
 }
 
 export async function create(c: Context) {
@@ -21,5 +21,5 @@ export async function create(c: Context) {
   const parsed = createReviewSchema.safeParse(body);
   if (!parsed.success) throw new ValidationError("Validation failed", parsed.error.flatten());
   const data = await reviewsService.createReview(userId, parsed.data);
-  return c.json({ success: true, message: "Review created", data }, 201);
+  return c.json({ success: true, data }, 201);
 }

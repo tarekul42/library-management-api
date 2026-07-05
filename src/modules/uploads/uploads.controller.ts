@@ -10,5 +10,5 @@ export async function upload(c: Context) {
   }
 
   const result = await uploadService.uploadFile(file);
-  return c.json({ success: true, message: "File uploaded successfully", data: result });
+  return c.json({ success: true, data: result });
 }
