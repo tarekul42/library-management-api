@@ -19,7 +19,11 @@ export async function startWorkers(): Promise<void> {
   overdueWorker = createOverdueWorker();
   reservationWorker = createReservationWorker();
 
-  await scheduleOverdueCheck();
+  try {
+    await scheduleOverdueCheck();
+  } catch (err) {
+    getLogger().warn({ err }, "Failed to schedule overdue check — queuing unavailable");
+  }
 
   getLogger().info("All workers started");
 }
