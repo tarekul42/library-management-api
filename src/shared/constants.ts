@@ -21,7 +21,7 @@ export const GENRE_LABELS: Record<Genre, string> = {
 export const MAX_PUBLISHED_YEAR = new Date().getFullYear() + 5;
 
 export function getMaxPublishedYear(): number {
-  return MAX_PUBLISHED_YEAR;
+  return new Date().getFullYear() + 5;
 }
 
 export const PAGINATION = {
