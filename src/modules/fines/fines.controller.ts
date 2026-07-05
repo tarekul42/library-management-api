@@ -1,5 +1,6 @@
 import type { Context } from "hono";
 import { z } from "zod";
+import { ValidationError } from '../../shared/errors.js';
 import * as finesService from './fines.service.js';
 
 const fineQuerySchema = z.object({
@@ -10,13 +11,17 @@ const fineQuerySchema = z.object({
 
 export async function getMyFines(c: Context) {
   const userId = c.get("userId");
-  const query = fineQuerySchema.parse(c.req.query());
+  const parsed = fineQuerySchema.safeParse(c.req.query());
+  if (!parsed.success) throw new ValidationError("Validation failed", parsed.error.issues);
+  const query = parsed.data;
   const result = await finesService.getMyFines(userId, query);
   return c.json({ success: true, message: "Fines retrieved", ...result });
 }
 
 export async function getAll(c: Context) {
-  const query = fineQuerySchema.parse(c.req.query());
+  const parsed = fineQuerySchema.safeParse(c.req.query());
+  if (!parsed.success) throw new ValidationError("Validation failed", parsed.error.issues);
+  const query = parsed.data;
   const result = await finesService.getAll(query);
   return c.json({ success: true, message: "Fines retrieved", ...result });
 }

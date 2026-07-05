@@ -1,12 +1,14 @@
 import type { Context } from "hono";
 import { createBorrowSchema, borrowQuerySchema } from '../../schemas/borrow.schema.js';
-import { ForbiddenError } from '../../shared/errors.js';
+import { ForbiddenError, ValidationError } from '../../shared/errors.js';
 import * as borrowService from './borrow.service.js';
 
 export async function create(c: Context) {
   const userId = c.get("userId");
   const body = await c.req.json();
-  const input = createBorrowSchema.parse(body);
+  const parsed = createBorrowSchema.safeParse(body);
+  if (!parsed.success) throw new ValidationError("Validation failed", parsed.error.issues);
+  const input = parsed.data;
   const data = await borrowService.createBorrow(userId, input);
   return c.json({ success: true, message: "Book borrowed successfully", data }, 201);
 }
@@ -21,13 +23,17 @@ export async function returnBook(c: Context) {
 
 export async function getMyBorrows(c: Context) {
   const userId = c.get("userId");
-  const query = borrowQuerySchema.parse(c.req.query());
+  const parsed = borrowQuerySchema.safeParse(c.req.query());
+  if (!parsed.success) throw new ValidationError("Validation failed", parsed.error.issues);
+  const query = parsed.data;
   const result = await borrowService.getUserBorrows(userId, query);
   return c.json({ success: true, message: "Borrows retrieved", ...result });
 }
 
 export async function getAll(c: Context) {
-  const query = borrowQuerySchema.parse(c.req.query());
+  const parsed = borrowQuerySchema.safeParse(c.req.query());
+  if (!parsed.success) throw new ValidationError("Validation failed", parsed.error.issues);
+  const query = parsed.data;
   const result = await borrowService.getAllBorrows(query);
   return c.json({ success: true, message: "Borrows retrieved", ...result });
 }

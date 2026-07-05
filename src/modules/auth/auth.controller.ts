@@ -1,6 +1,7 @@
 import type { Context } from "hono";
 import { setCookie, getCookie, deleteCookie } from "hono/cookie";
 import { registerSchema, loginSchema, forgotPasswordSchema, resetPasswordSchema } from '../../schemas/auth.schema.js';
+import { ValidationError } from '../../shared/errors.js';
 import * as authService from './auth.service.js';
 
 const REFRESH_COOKIE = "refreshToken";
@@ -14,7 +15,9 @@ const COOKIE_OPTIONS = {
 
 export async function register(c: Context) {
   const body = await c.req.json();
-  const input = registerSchema.parse(body);
+  const parsed = registerSchema.safeParse(body);
+  if (!parsed.success) throw new ValidationError("Validation failed", parsed.error.issues);
+  const input = parsed.data;
   const result = await authService.register(input);
   setCookie(c, REFRESH_COOKIE, result.refreshToken, COOKIE_OPTIONS);
   return c.json({
@@ -26,7 +29,9 @@ export async function register(c: Context) {
 
 export async function login(c: Context) {
   const body = await c.req.json();
-  const input = loginSchema.parse(body);
+  const parsed = loginSchema.safeParse(body);
+  if (!parsed.success) throw new ValidationError("Validation failed", parsed.error.issues);
+  const input = parsed.data;
   const result = await authService.login(input);
   setCookie(c, REFRESH_COOKIE, result.refreshToken, COOKIE_OPTIONS);
   return c.json({
@@ -68,14 +73,18 @@ export async function changePassword(c: Context) {
 
 export async function forgotPassword(c: Context) {
   const body = await c.req.json();
-  const input = forgotPasswordSchema.parse(body);
+  const parsed = forgotPasswordSchema.safeParse(body);
+  if (!parsed.success) throw new ValidationError("Validation failed", parsed.error.issues);
+  const input = parsed.data;
   await authService.forgotPassword(input.email);
   return c.json({ success: true, message: "If that email is registered, a password reset link has been sent" });
 }
 
 export async function resetPassword(c: Context) {
   const body = await c.req.json();
-  const input = resetPasswordSchema.parse(body);
+  const parsed = resetPasswordSchema.safeParse(body);
+  if (!parsed.success) throw new ValidationError("Validation failed", parsed.error.issues);
+  const input = parsed.data;
   await authService.resetPassword(input.token, input.password);
   return c.json({ success: true, message: "Password reset successful" });
 }

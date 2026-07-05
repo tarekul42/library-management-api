@@ -1,5 +1,6 @@
 import type { Context } from "hono";
 import { z } from "zod";
+import { ValidationError } from '../../shared/errors.js';
 import * as notificationService from './notifications.service.js';
 
 const notificationQuerySchema = z.object({
@@ -9,7 +10,9 @@ const notificationQuerySchema = z.object({
 
 export async function getMyNotifications(c: Context) {
   const userId = c.get("userId");
-  const query = notificationQuerySchema.parse(c.req.query());
+  const parsed = notificationQuerySchema.safeParse(c.req.query());
+  if (!parsed.success) throw new ValidationError("Validation failed", parsed.error.issues);
+  const query = parsed.data;
   const result = await notificationService.getMyNotifications(userId, query);
   return c.json({ success: true, message: "Notifications retrieved", ...result });
 }

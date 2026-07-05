@@ -14,7 +14,9 @@ const reservationQuerySchema = z.object({
 
 export async function getMyReservations(c: Context) {
   const userId = c.get("userId");
-  const query = reservationQuerySchema.parse(c.req.query());
+  const parsed = reservationQuerySchema.safeParse(c.req.query());
+  if (!parsed.success) throw new ValidationError("Validation failed", parsed.error.issues);
+  const query = parsed.data;
   const result = await reservationService.getMyReservations(userId, query);
   return c.json({ success: true, message: "Reservations retrieved", ...result });
 }

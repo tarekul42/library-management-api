@@ -1,5 +1,6 @@
 import type { Context } from "hono";
 import { createAuthorSchema, updateAuthorSchema } from '../../schemas/author.schema.js';
+import { ValidationError } from '../../shared/errors.js';
 import * as authorService from './authors.service.js';
 
 export async function getAll(c: Context) {
@@ -23,7 +24,9 @@ export async function getBooks(c: Context) {
 
 export async function create(c: Context) {
   const body = await c.req.json();
-  const input = createAuthorSchema.parse(body);
+  const parsed = createAuthorSchema.safeParse(body);
+  if (!parsed.success) throw new ValidationError("Validation failed", parsed.error.issues);
+  const input = parsed.data;
   const data = await authorService.create(input);
   return c.json({ success: true, message: "Author created", data }, 201);
 }
@@ -31,7 +34,9 @@ export async function create(c: Context) {
 export async function update(c: Context) {
   const id = c.req.param("id") ?? "";
   const body = await c.req.json();
-  const input = updateAuthorSchema.parse(body);
+  const parsed = updateAuthorSchema.safeParse(body);
+  if (!parsed.success) throw new ValidationError("Validation failed", parsed.error.issues);
+  const input = parsed.data;
   const data = await authorService.update(id, input);
   return c.json({ success: true, message: "Author updated", data });
 }
